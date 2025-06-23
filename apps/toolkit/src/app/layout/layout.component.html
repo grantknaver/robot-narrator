@@ -1,6 +1,9 @@
-<div>
-  <app-header></app-header>
-  <div>I am the router outlet in the layout component</div>
-  <router-outlet></router-outlet>
-  <app-footer></app-footer>
+<div class="layout-wrapper">
+  <app-header class="layout-header"></app-header>
+
+  <main class="layout-main">
+    <router-outlet></router-outlet>
+  </main>
+
+  <app-footer class="layout-footer"></app-footer>
 </div>
