@@ -1,1 +1,9 @@
-<p>Im a header</p>
+<div class="header-layout">
+  <h2>Im a header</h2>
+  <div>
+    <div *ngIf="isAuthenticated">Hello {{activeUser?.email}}</div>
+
+    <p-button *ngIf="!isAuthenticated" (onClick)=onLogin() label="login" />
+    <p-button *ngIf="isAuthenticated" (onClick)=onLogout() label="logout" />
+  </div>
+</div>

@@ -8,7 +8,7 @@
 
 /* Fixed 50px height and pinned to top */
 .layout-header {
-  height: 50px;
+  height: 75px;
   flex-shrink: 0;
   background-color: white;
   border-bottom: 1px solid #ccc;
@@ -24,7 +24,7 @@
 
 /* Fixed 50px height and pinned to bottom */
 .layout-footer {
-  height: 50px;
+  height: 75px;
   flex-shrink: 0;
   background-color: white;
   border-top: 1px solid #ccc;
