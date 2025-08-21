@@ -1,0 +1,18 @@
+.wave {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;     // each bar takes equal fraction of container width
+  gap: 4px;                   // small spacing between bars
+  align-items: end;           // bars grow from the bottom
+  height: 120px;
+  padding: 0 6px;
+}
+
+.bar {
+  width: 100%;                // now each bar fills its column
+  height: 20%;                // smaller baseline so scaling looks bigger
+  background-color: red;
+  border-radius: 4px;         // smoother bars
+  transform-origin: bottom center;
+  will-change: transform;
+}

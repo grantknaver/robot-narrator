@@ -23,7 +23,8 @@
           }
         ],
         "styles": ["apps/toolkit/src/styles.scss"],
-        "scripts": []
+        "scripts": [
+        ]
       },
       "configurations": {
         "production": {
