@@ -33,16 +33,13 @@ const DEFAULTS: SimpleConfig = {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class WaveNarrationComponent implements OnInit, AfterViewInit, OnDestroy {
-  @Input() fixedBarCount = 32;
+  @Input({transform: (barCount: number) => Array.from({length: barCount})}) fixedBarCount: unknown[] = Array.from({length: 32});
   @Input() config: Partial<SimpleConfig> = {...DEFAULTS};
-
 
   private _hasEngineStarted = false;
   private _head = 0;
   private _cfg!: SimpleConfig;
-  private _len = 0;
   private _setters: Array<(v: number) => void> = [];
-  fixedBars = Array.from({ length: 32 });
   audioElement = viewChild<ElementRef>('audioElement')
   amplitudes: number[] = [];
   amplitudes$: Observable<number[]> = of([]);
@@ -126,7 +123,7 @@ export class WaveNarrationComponent implements OnInit, AfterViewInit, OnDestroy 
 
     this.ngZone.runOutsideAngular(() => {
       // Set initial transform origin and base scale
-      gsap.set(els, { transformOrigin: 'bottom center', scaleY: 1 });
+      gsap.set(els, { transformOrigin: 'center center', scaleY: 1 });
 
       // Drive the updates at a steady tempo using a tiny repeating tween.
       // Tweak "frameDuration" to speed up/slow down the wave.

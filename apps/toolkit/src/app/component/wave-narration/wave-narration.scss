@@ -14,16 +14,16 @@
 
 
     .bar {
-      height: 20%;
-      background-color: red;
+      height: 40%;
+      background-color: black;
       border-radius: 4px;
-      transform-origin: bottom center;
+      transform-origin: center center;
       will-change: transform;
     }
   }
 
   .audioPlayer {
-    position: absolute !important;
+    position: absolute ;
     top: 0;
     z-index: 1;
     visibility: hidden;
