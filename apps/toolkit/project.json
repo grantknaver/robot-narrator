@@ -17,10 +17,7 @@
         "tsConfig": "apps/toolkit/tsconfig.app.json",
         "inlineStyleLanguage": "scss",
         "assets": [
-          {
-            "glob": "**/*",
-            "input": "apps/toolkit/public"
-          }
+          "apps/toolkit/src/assets"
         ],
         "styles": ["apps/toolkit/src/styles.scss"],
         "scripts": [

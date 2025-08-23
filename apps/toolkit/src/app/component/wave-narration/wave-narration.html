@@ -1,7 +1,14 @@
 
 
-  <div class="wave">
-    <div class="bar" *ngFor="let _ of bars; let i = index; trackBy: trackByIndex" ></div>
+  <div class="container">
+    <div class="wave" *ngIf="amplitudes$ | async ">
+      <div class="bar" #barEl *ngFor="let _ of fixedBars; let i = index; trackBy: trackByIndex" ></div>
+    </div>
+
+    <audio class="audioPlayer" #audioElement controls src="../../../assets/test.mp3"></audio>
+    <button (click)="isPlaying ? pauseAudio() : playAudio() ">TEST</button>
   </div>
+
+
 
 
