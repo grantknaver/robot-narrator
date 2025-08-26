@@ -1,12 +1,16 @@
 
 
   <div class="container">
-    <div class="wave" *ngIf="amplitudes$ | async ">
+    <div class="wave" *ngIf="{
+      'domReady': domReady$ | async,
+      'amplitudes': amplitudes$ | async,
+      'engineIgnition': engineIgnition$ | async
+    }">
       <div class="bar" #barEl *ngFor="let _ of fixedBarCount; let i = index; trackBy: trackByIndex" ></div>
     </div>
 
     <audio class="audioPlayer" #audioElement controls src="../../../assets/test.mp3" (ended)="pauseAudio()"></audio>
-    <button (click)="isPlaying ? pauseAudio() : playAudio() ">TEST</button>
+    <!-- <button (click)="isPlaying ? pauseAudio() : playAudio() ">TEST</button> -->
   </div>
 
 

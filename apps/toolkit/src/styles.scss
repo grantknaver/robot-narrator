@@ -1,4 +1,6 @@
 /* You can add global styles to this file, and also import other style files */
+@import "primeicons/primeicons.css";
+
 html, body {
   height: 100%;
   margin: 0;
@@ -7,4 +9,12 @@ html, body {
 app-root {
   display: block;
   height: 100%;
+}
+
+/* or, a bit more specific to your layout */
+app-root .route-slot > router-outlet + * {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
 }

@@ -1,10 +1,10 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { WaveNarrationComponent } from '../wave-narration/wave-narration';
+import { NarrationComponent } from '../../component/narration/narration';
 
 @Component({
   selector: 'app-landing',
-  imports: [CommonModule, WaveNarrationComponent],
+  imports: [CommonModule, NarrationComponent],
   templateUrl: './landing.html',
   styleUrl: './landing.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

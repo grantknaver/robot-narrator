@@ -1,0 +1,5 @@
+.container {
+  display: flex;       /* if its children should also stretch */
+  flex-direction: column;
+  width: 100%;
+}
