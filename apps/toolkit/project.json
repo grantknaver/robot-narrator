@@ -20,8 +20,10 @@
           "apps/toolkit/src/assets"
         ],
         "styles": ["apps/toolkit/src/styles.scss"],
-        "scripts": [
-        ]
+        "scripts": [],
+        "stylePreprocessorOptions": {
+          "includePaths": ["libs"]
+        }
       },
       "configurations": {
         "production": {

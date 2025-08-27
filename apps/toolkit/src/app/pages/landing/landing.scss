@@ -1,13 +1,9 @@
+@use 'styles/src/index' as *;
+
 :host {
-  display: flex;
-  flex-direction: column;
-  flex: 1 1 auto;
-  min-height: 0;
+  @include flexFill('column');
 }
 
 .container {
-  display: flex;
-  flex-direction: column;
-  flex: 1 1 auto;
-  min-height: 0;
+  @include flexFill('column');
 }

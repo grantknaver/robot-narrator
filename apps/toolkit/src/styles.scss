@@ -1,5 +1,7 @@
 /* You can add global styles to this file, and also import other style files */
+@use 'styles/src/index' as *;
 @import "primeicons/primeicons.css";
+
 
 html, body {
   height: 100%;
@@ -13,8 +15,11 @@ app-root {
 
 /* or, a bit more specific to your layout */
 app-root .route-slot > router-outlet + * {
-  display: flex;
-  flex-direction: column;
-  flex: 1 1 auto;
-  min-height: 0;
+  @include flexFill('column');
+}
+
+// ---------------------------
+
+.play-button .p-button-icon, .p-button-icon:before, .p-button-icon:after {
+  font-size: 5rem;
 }

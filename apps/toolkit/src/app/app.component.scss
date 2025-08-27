@@ -1,3 +1,5 @@
+@use 'styles/src/index' as *;
+
 :host {
   display: flex;
   flex-direction: column;
@@ -5,16 +7,9 @@
 }
 
 .main-content {
-  display: flex;
-  flex: 1 1 auto;
-  min-height: 0;
-  background-color: red;
+  @include flexFill('column');
 }
 
 .route-slot {
-  display: flex;
-  flex-direction: column;
-  flex: 1 1 auto;
-  min-height: 0;
-  background-color: silver;
+  @include flexFill('column');
 }
