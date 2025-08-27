@@ -32,7 +32,7 @@ const DEFAULTS: SimpleConfig = {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class WaveformComponent implements OnInit, AfterViewInit, OnDestroy {
-  @Input({transform: (barCount: number) => Array.from({length: barCount})}) fixedBarCount: unknown[] = Array.from({length: 32});
+  @Input({transform: (barCount: number) => Array.from({length: barCount})}) fixedBarCount: unknown[] = Array.from({length: 16});
   @Input() config: Partial<SimpleConfig> = {...DEFAULTS};
   @ViewChildren('barEl', { read: ElementRef })
   barEls!: QueryList<ElementRef<HTMLElement>>;

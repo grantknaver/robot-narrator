@@ -1,7 +1,14 @@
+@use 'styles/src/index' as *;
+
+:host {
+  @include flexFill('column')
+}
+
 .container {
-  position: relative;
+  @include flexFill('column');
+
   .wave {
-    width: 100%;
+    width: 20%;
     display: grid;
     grid-auto-flow: column;
     grid-auto-columns: 1fr;
@@ -10,12 +17,10 @@
     height: 120px;
     padding: 8px;
     z-index: 2;
-    position: absolute;
-
 
     .bar {
       height: 40%;
-      background-color: black;
+      background-color: $accent;
       border-radius: 4px;
       transform-origin: center center;
       will-change: transform;
@@ -23,10 +28,10 @@
   }
 
   .audioPlayer {
-    position: absolute ;
     top: 0;
     z-index: 1;
     visibility: hidden;
+    width: 10px;
   }
 
   button {
