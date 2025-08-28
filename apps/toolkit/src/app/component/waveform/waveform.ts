@@ -1,13 +1,32 @@
 import {
-  ChangeDetectionStrategy, Component, AfterViewInit, OnDestroy,
-  ElementRef, NgZone, OnInit, ViewChildren, QueryList, ChangeDetectorRef,
+  ChangeDetectionStrategy,
+  Component,
+  AfterViewInit,
+  OnDestroy,
+  ElementRef,
+  NgZone,
+  OnInit,
+  ViewChildren,
+  QueryList,
+  ChangeDetectorRef,
   viewChild,
-  Input
+  Input,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { gsap } from 'gsap';
-import { combineLatest, filter, map, Observable, of, shareReplay, startWith, switchMap, take, tap } from 'rxjs';
+import {
+  combineLatest,
+  filter,
+  map,
+  Observable,
+  of,
+  shareReplay,
+  startWith,
+  switchMap,
+  take,
+  tap,
+} from 'rxjs';
 
 type SimpleConfig = {
   fps: number;
@@ -32,18 +51,16 @@ const DEFAULTS: SimpleConfig = {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class WaveformComponent implements OnInit, AfterViewInit, OnDestroy {
-  @Input({transform: (barCount: number) => Array.from({length: barCount})}) fixedBarCount: unknown[] = Array.from({length: 16});
-  @Input() config: Partial<SimpleConfig> = {...DEFAULTS};
+  @Input() config: Partial<SimpleConfig> = { ...DEFAULTS };
   @ViewChildren('barEl', { read: ElementRef })
-  barEls!: QueryList<ElementRef<HTMLElement>>;
+  barEls!: QueryList<ElementRef<SVGGraphicsElement>>;
 
   private _head = 0;
   private _cfg!: SimpleConfig;
   private _setters: Array<(v: number) => void> = [];
-
+  bars: ElementRef<SVGGraphicsElement>[] = [];
   amplitudes: number[] = [];
   amplitudes$: Observable<number[]> = of([]);
-  domReady$: Observable<QueryList<ElementRef<HTMLElement>>> = new Observable();
   engineIgnition$: Observable<unknown> = new Observable();
   audioElement = viewChild<ElementRef>('audioElement');
   tl: gsap.core.Timeline = gsap.timeline({ repeat: -1, paused: true });
@@ -58,17 +75,16 @@ export class WaveformComponent implements OnInit, AfterViewInit, OnDestroy {
 
   ngOnInit(): void {
     this._cfg = { ...DEFAULTS, ...this.config };
-    this.getAmplitudes()
+    this.getAmplitudes();
   }
 
   ngAfterViewInit(): void {
-    this.domReady$ = this.barEls.changes.pipe(
-      startWith(this.barEls),
-      filter((b) => !!b && b.length > 0),
-      take(1),
-      shareReplay(1)
-    );
-    this.engineIgnition$ = combineLatest([this.amplitudes$, this.domReady$]).pipe(
+    this.bars = Array.from(this.barEls).sort((a, b) => {
+      const first = a.nativeElement.getBBox().x;
+      const second = b.nativeElement.getBBox().x;
+      return first - second;
+    });
+    this.engineIgnition$ = this.amplitudes$.pipe(
       take(1),
       tap(() => this.startEngine())
     );
@@ -86,44 +102,56 @@ export class WaveformComponent implements OnInit, AfterViewInit, OnDestroy {
     );
   }
 
-
   private startEngine() {
-  const els = this.barEls.map(ref => ref.nativeElement);
-  this._setters = els.map(el => gsap.quickSetter(el, 'scaleY') as (v:number)=>void);;
-  const n = els.length;
-  const half = Math.floor(n / 2);
-  const len = this.amplitudes.length;
-  const { minScale, maxScale, gain, fps } = this._cfg;
-  const scaleFromSample = (s:number) => minScale + this.normalize(s * gain) * (maxScale - minScale);
-  this._head = 0;
+    const els = this.bars.map((ref) => ref.nativeElement);
+    this._setters = els.map(
+      (el) => gsap.quickSetter(el, 'scaleY') as (v: number) => void
+    );
+    const n = els.length;
+    const half = Math.floor(n / 2);
+    const len = this.amplitudes.length;
+    const { minScale, maxScale, gain, fps } = this._cfg;
+    const scaleFromSample = (s: number) =>
+      minScale + this.normalize(s * gain) * (maxScale - minScale);
+    this._head = 0;
 
-  const applyFrame = () => {
-    for (let i = 0; i < half; i++) {
-      const sample = this.amplitudes[(this._head + i) % len];
-      const v = scaleFromSample(sample);
-      this._setters[i](v);
-      this._setters[n - 1 - i](v);
-    }
-    if (n % 2 === 1) {
-      const sample = this.amplitudes[(this._head + half) % len];
-      this._setters[half](scaleFromSample(sample));
-    }
-    this._head = (this._head + 1) % len;
-  };
-  this.ngZone.runOutsideAngular(() => {
-    gsap.set(els, { transformOrigin: 'center center', scaleY: minScale });
+    const applyFrame = () => {
+      for (let i = 0; i < half; i++) {
+        const sample = this.amplitudes[(this._head + i) % len];
+        const v = scaleFromSample(sample);
+        this._setters[i](v);
+        this._setters[n - 1 - i](v);
+      }
+      if (n % 2 === 1) {
+        const sample = this.amplitudes[(this._head + half) % len];
+        this._setters[half](scaleFromSample(sample));
+      }
+      this._head = (this._head + 1) % len;
+    };
+    this.ngZone.runOutsideAngular(() => {
+      gsap.set(els, { scaleY: minScale });
 
-    const frameDuration = 1 / Math.max(1, fps || 33);
-    this.tl.clear().to({}, {
-      duration: frameDuration,
-      repeat: -1,
-      onRepeat: applyFrame,
-    }).pause();
-  });
-}
+      const frameDuration = 1 / Math.max(1, fps || 33);
+      this.tl
+        .clear()
+        .to(
+          {},
+          {
+            duration: frameDuration,
+            repeat: -1,
+            onRepeat: applyFrame,
+          }
+        )
+        .pause();
+    });
+  }
 
-  playWave() { this.tl?.play(); }
-  pauseWave() { this.tl?.pause(); }
+  playWave() {
+    this.tl?.play();
+  }
+  pauseWave() {
+    this.tl?.pause();
+  }
   restartWave() {
     if (!this.tl) return;
     this._head = 0;
@@ -131,36 +159,41 @@ export class WaveformComponent implements OnInit, AfterViewInit, OnDestroy {
 
     const v = this._cfg.minScale;
     for (const set of this._setters) set(v);
-   }
+  }
 
   ngOnDestroy(): void {
     this.tl?.kill();
   }
 
-  trackByIndex(index: number) { return index; }
-
-normalize(v: number): number;
-normalize(arr: number[]): number[];
-normalize(data: number | number[]): number | number[] {
-  const clamp01 = (x: number) => (x < 0 ? 0 : x > 1 ? 1 : x);
-
-  if (!Array.isArray(data)) {
-    return clamp01(data);
+  trackByIndex(index: number) {
+    return index;
   }
 
-  if (!data.length) return data;
+  normalize(v: number): number;
+  normalize(arr: number[]): number[];
+  normalize(data: number | number[]): number | number[] {
+    const clamp01 = (x: number) => (x < 0 ? 0 : x > 1 ? 1 : x);
 
-  let min = Infinity, max = -Infinity;
-  for (const v of data) { if (v < min) min = v; if (v > max) max = v; }
-  if (max <= min) return data.map(() => 0);
+    if (!Array.isArray(data)) {
+      return clamp01(data);
+    }
 
-  const range = max - min;
-  return data.map(v => (v - min) / range);
-}
+    if (!data.length) return data;
 
+    let min = Infinity,
+      max = -Infinity;
+    for (const v of data) {
+      if (v < min) min = v;
+      if (v > max) max = v;
+    }
+    if (max <= min) return data.map(() => 0);
+
+    const range = max - min;
+    return data.map((v) => (v - min) / range);
+  }
 
   playAudio() {
-    const audioEl= this.audioElement()?.nativeElement;
+    const audioEl = this.audioElement()?.nativeElement;
     audioEl.play();
     this.playWave();
     this.isPlaying = true;

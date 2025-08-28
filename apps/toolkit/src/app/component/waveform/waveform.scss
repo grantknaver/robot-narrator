@@ -1,29 +1,18 @@
 @use 'styles/src/index' as *;
 
 :host {
-  @include flexFill('column')
+  @include flexFill('column');
 }
 
 .container {
   @include flexFill('column');
 
-  .wave {
-    width: 20%;
-    display: grid;
-    grid-auto-flow: column;
-    grid-auto-columns: 1fr;
-    gap: 4px;
-    align-items: center;
-    height: 120px;
-    padding: 8px;
+  svg {
     z-index: 2;
 
     .bar {
-      height: 40%;
-      background-color: $accent;
-      border-radius: 4px;
-      transform-origin: center center;
-      will-change: transform;
+      // transform-box: fill-box;
+      // transform-origin: 50% 50%;
     }
   }
 
@@ -38,7 +27,3 @@
     margin-top: 150px;
   }
 }
-
-
-
-
