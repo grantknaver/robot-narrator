@@ -160,14 +160,12 @@ export class RobotNarratorComponent
 
       // Eye sweep params
       const dx = 15; // pixels left/right (tune 6–14)
-      const periodSec = 0.8; // seconds to go left -> right
 
       const frameDuration = 1 / Math.max(1, fps || 33);
 
       this.tl.clear();
 
       // Eyes together (look left/right in sync)
-      console.log('eyeEls', eyeEls);
       if (eyeEls.length) {
         gsap.set(eyeEls, { x: -dx }); // start at left
         this.tl.to(
@@ -182,16 +180,6 @@ export class RobotNarratorComponent
           0 // start at time 0 so it runs alongside the mouth
         );
       }
-
-      // If you want mirrored eyes instead, replace the block above with:
-      // if (eyeEls.length >= 2) {
-      //   const [leftEye, rightEye] = [...eyeEls].sort((a, b) => a.getBBox().x - b.getBBox().x);
-      //   gsap.set(leftEye,  { x: -dx });
-      //   gsap.set(rightEye, { x:  dx });
-      //   this.tl.to(leftEye,  { x:  dx, duration: periodSec, ease: 'sine.inOut', yoyo: true, repeat: -1 }, 0)
-      //          .to(rightEye, { x: -dx, duration: periodSec, ease: 'sine.inOut', yoyo: true, repeat: -1 }, 0);
-      // }
-
       // Mouth ticker (per-frame)
       this.tl
         .to(
@@ -216,8 +204,8 @@ export class RobotNarratorComponent
   restartWave() {
     if (!this.tl) return;
     this._head = 0;
-    this.tl?.pause(0);
 
+    this.tl.pause();
     const v = this._cfg.minScale;
     for (const set of this._barSetters) set(v);
   }
