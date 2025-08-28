@@ -1,4 +1,10 @@
-<div class="container">
+<div
+  class="container"
+  *ngIf="{
+  'amps': amplitudes$ | async,
+  'ignition': engineIgnition$ | async
+}"
+>
   <svg
     id="svg5"
     viewBox="0 0 1035.29 880"
@@ -184,6 +190,8 @@
       y="328.93573"
     />
     <circle
+      #eyeEl
+      class="eye"
       style="
         fill: #fff05a;
         fill-opacity: 1;
@@ -197,6 +205,8 @@
       r="13.243022"
     />
     <circle
+      #eyeEl
+      class="eye"
       style="
         fill: #fff05a;
         fill-opacity: 1;
@@ -219,4 +229,5 @@
     (ended)="pauseAudio()"
   ></audio>
   <!-- <button (click)="isPlaying ? pauseAudio() : playAudio() ">TEST</button> -->
+  <button (click)="playAudio() ">Play</button>
 </div>

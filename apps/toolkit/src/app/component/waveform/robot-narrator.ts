@@ -10,7 +10,9 @@ import {
   QueryList,
   ChangeDetectorRef,
   viewChild,
+  viewChildren,
   Input,
+  Signal,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
@@ -43,13 +45,15 @@ export class RobotNarratorComponent
   implements OnInit, AfterViewInit, OnDestroy
 {
   @Input() config: Partial<SimpleConfig> = { ...DEFAULTS };
-  @ViewChildren('barEl', { read: ElementRef })
-  barEls!: QueryList<ElementRef<SVGGraphicsElement>>;
 
   private _head = 0;
   private _cfg!: SimpleConfig;
-  private _setters: Array<(v: number) => void> = [];
+  private _barSetters: Array<(v: number) => void> = [];
+  private _eyeSetters: Array<(v: number) => void> = [];
 
+  eyeEls = viewChildren<ElementRef<SVGGraphicsElement>>('eyeEl');
+  eyes: ElementRef<SVGGraphicsElement>[] = [];
+  barEls = viewChildren<ElementRef<SVGGraphicsElement>>('barEl');
   bars: ElementRef<SVGGraphicsElement>[] = [];
   amplitudes: number[] = [];
   amplitudes$: Observable<number[]> = of([]);
@@ -71,7 +75,7 @@ export class RobotNarratorComponent
   }
 
   ngAfterViewInit(): void {
-    this.bars = Array.from(this.barEls).sort((a, b) => {
+    this.bars = Array.from(this.barEls()).sort((a, b) => {
       const first = a.nativeElement.getBBox().x;
       const second = b.nativeElement.getBBox().x;
       return first - second;
@@ -95,44 +99,109 @@ export class RobotNarratorComponent
   }
 
   private startEngine() {
-    const els = this.bars.map((ref) => ref.nativeElement);
-    this._setters = els.map(
+    const eyeEls = this.eyeEls().map((ref) => ref.nativeElement);
+    this._eyeSetters = eyeEls.map(
+      (el) => gsap.quickSetter(el, 'x') as (v: number) => void
+    );
+    const barEls = this.bars.map((ref) => ref.nativeElement);
+    this._barSetters = barEls.map(
       (el) => gsap.quickSetter(el, 'scaleY') as (v: number) => void
     );
-    const n = els.length;
-    const half = Math.floor(n / 2);
-    const len = this.amplitudes.length;
+    const barsLength = barEls.length;
+    const half = Math.floor(barsLength / 2);
+    const ampsLength = this.amplitudes.length;
     const { minScale, maxScale, gain, fps } = this._cfg;
-    const scaleFromSample = (s: number) =>
+    const scaleBarSample = (s: number) =>
       minScale + this.normalize(s * gain) * (maxScale - minScale);
     this._head = 0;
 
     const applyFrame = () => {
       for (let i = 0; i < half; i++) {
-        const sample = this.amplitudes[(this._head + i) % len];
-        const v = scaleFromSample(sample);
-        this._setters[i](v);
-        this._setters[n - 1 - i](v);
+        const sample = this.amplitudes[(this._head + i) % ampsLength];
+        const b = scaleBarSample(sample);
+        this._barSetters[i](b);
+        this._barSetters[barsLength - 1 - i](b);
       }
-      if (n % 2 === 1) {
-        const sample = this.amplitudes[(this._head + half) % len];
-        this._setters[half](scaleFromSample(sample));
+      if (barsLength % 2 === 1) {
+        const sample = this.amplitudes[(this._head + half) % ampsLength];
+        this._barSetters[half](scaleBarSample(sample));
       }
-      this._head = (this._head + 1) % len;
+      this._head = (this._head + 1) % ampsLength;
     };
+    // this.ngZone.runOutsideAngular(() => {
+    //   gsap.set(eyeEls, { transformOrigin: 'center', x: 0 });
+    //   gsap.set(barEls, { transformOrigin: 'center center', scaleY: minScale });
+
+    //   const frameDuration = 1 / Math.max(1, fps || 33);
+    //   this.tl
+    //     .clear()
+    //     // .to(this.eyeEls, {
+    //     //   x: 20,
+    //     //   duration: 0.8,
+    //     //   ease: 'sine.inOut',
+    //     //   yoyo: true,
+    //     //   repeat: -1,
+    //     // })
+    //     .to(
+    //       {},
+    //       {
+    //         duration: frameDuration,
+    //         repeat: -1,
+    //         onRepeat: applyFrame,
+    //       }
+    //     )
+    //     .pause();
+    // });
+
     this.ngZone.runOutsideAngular(() => {
-      gsap.set(els, { scaleY: minScale });
+      // Init transforms
+      gsap.set(barEls, { transformOrigin: 'center center', scaleY: minScale });
+      gsap.set(eyeEls, { transformOrigin: 'center center', x: 0 });
+
+      // Eye sweep params
+      const dx = 15; // pixels left/right (tune 6–14)
+      const periodSec = 0.8; // seconds to go left -> right
 
       const frameDuration = 1 / Math.max(1, fps || 33);
+
+      this.tl.clear();
+
+      // Eyes together (look left/right in sync)
+      console.log('eyeEls', eyeEls);
+      if (eyeEls.length) {
+        gsap.set(eyeEls, { x: -dx }); // start at left
+        this.tl.to(
+          eyeEls,
+          {
+            x: dx,
+            duration: 4,
+            ease: 'sine.inOut',
+            yoyo: true,
+            repeat: -1,
+          },
+          0 // start at time 0 so it runs alongside the mouth
+        );
+      }
+
+      // If you want mirrored eyes instead, replace the block above with:
+      // if (eyeEls.length >= 2) {
+      //   const [leftEye, rightEye] = [...eyeEls].sort((a, b) => a.getBBox().x - b.getBBox().x);
+      //   gsap.set(leftEye,  { x: -dx });
+      //   gsap.set(rightEye, { x:  dx });
+      //   this.tl.to(leftEye,  { x:  dx, duration: periodSec, ease: 'sine.inOut', yoyo: true, repeat: -1 }, 0)
+      //          .to(rightEye, { x: -dx, duration: periodSec, ease: 'sine.inOut', yoyo: true, repeat: -1 }, 0);
+      // }
+
+      // Mouth ticker (per-frame)
       this.tl
-        .clear()
         .to(
           {},
           {
             duration: frameDuration,
             repeat: -1,
             onRepeat: applyFrame,
-          }
+          },
+          0
         )
         .pause();
     });
@@ -150,7 +219,7 @@ export class RobotNarratorComponent
     this.tl?.pause(0);
 
     const v = this._cfg.minScale;
-    for (const set of this._setters) set(v);
+    for (const set of this._barSetters) set(v);
   }
 
   ngOnDestroy(): void {
