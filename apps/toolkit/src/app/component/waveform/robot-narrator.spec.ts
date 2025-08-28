@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { WaveformComponent } from './waveform';
+import { WaveformComponent } from './robot-narrator';
 
 describe('WaveNarrationComponent', () => {
   let component: WaveformComponent;

@@ -15,18 +15,7 @@ import {
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { gsap } from 'gsap';
-import {
-  combineLatest,
-  filter,
-  map,
-  Observable,
-  of,
-  shareReplay,
-  startWith,
-  switchMap,
-  take,
-  tap,
-} from 'rxjs';
+import { map, Observable, of, shareReplay, take, tap } from 'rxjs';
 
 type SimpleConfig = {
   fps: number;
@@ -43,14 +32,16 @@ const DEFAULTS: SimpleConfig = {
 };
 
 @Component({
-  selector: 'app-waveform',
+  selector: 'app-robot-narrator',
   standalone: true,
   imports: [CommonModule],
-  templateUrl: './waveform.html',
-  styleUrls: ['./waveform.scss'],
+  templateUrl: './robot-narrator.html',
+  styleUrls: ['./robot-narrator.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class WaveformComponent implements OnInit, AfterViewInit, OnDestroy {
+export class RobotNarratorComponent
+  implements OnInit, AfterViewInit, OnDestroy
+{
   @Input() config: Partial<SimpleConfig> = { ...DEFAULTS };
   @ViewChildren('barEl', { read: ElementRef })
   barEls!: QueryList<ElementRef<SVGGraphicsElement>>;
@@ -58,6 +49,7 @@ export class WaveformComponent implements OnInit, AfterViewInit, OnDestroy {
   private _head = 0;
   private _cfg!: SimpleConfig;
   private _setters: Array<(v: number) => void> = [];
+
   bars: ElementRef<SVGGraphicsElement>[] = [];
   amplitudes: number[] = [];
   amplitudes$: Observable<number[]> = of([]);
