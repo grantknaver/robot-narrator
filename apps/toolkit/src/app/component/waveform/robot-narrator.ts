@@ -26,11 +26,16 @@ type SimpleConfig = {
 };
 
 const DEFAULTS: SimpleConfig = {
-  fps: 33,
-  minScale: 0.35,
-  maxScale: 2.0,
-  gain: 1.0,
+  fps: 20,
+  minScale: 0.25,
+  maxScale: 2.2,
+  gain: 1.5,
 };
+
+interface Character {
+  name: string;
+  url: string;
+}
 
 @Component({
   selector: 'app-robot-narrator',
@@ -48,7 +53,6 @@ export class RobotNarratorComponent
   private _head = 0;
   private _cfg!: SimpleConfig;
   private _barSetters: Array<(v: number) => void> = [];
-  private _eyeSetters: Array<(v: number) => void> = [];
 
   eyeEls = viewChildren<ElementRef<SVGGraphicsElement>>('eyeEl');
   eyes: ElementRef<SVGGraphicsElement>[] = [];
@@ -61,9 +65,13 @@ export class RobotNarratorComponent
   tl: gsap.core.Timeline = gsap.timeline({ repeat: -1, paused: true });
   isPlaying = false;
   character = 'Narrator';
+  showScript = false;
 
-  countries: any[] | undefined;
-  selectedCountry: string | undefined;
+  characters: Character[] = [];
+  selectedCharacter: Character = {
+    name: 'Austin',
+    url: '../../../assets/austin-texas.mp3',
+  };
 
   constructor(
     private ngZone: NgZone,
@@ -74,17 +82,9 @@ export class RobotNarratorComponent
   ngOnInit(): void {
     this._cfg = { ...DEFAULTS, ...this.config };
     this.getAmplitudes();
-    this.countries = [
-      { name: 'Australia', code: 'AU' },
-      { name: 'Brazil', code: 'BR' },
-      { name: 'China', code: 'CN' },
-      { name: 'Egypt', code: 'EG' },
-      { name: 'France', code: 'FR' },
-      { name: 'Germany', code: 'DE' },
-      { name: 'India', code: 'IN' },
-      { name: 'Japan', code: 'JP' },
-      { name: 'Spain', code: 'ES' },
-      { name: 'United States', code: 'US' },
+    this.characters = [
+      { name: 'Austin', url: '../../../assets/austin-texas.mp3' },
+      { name: 'Grandpa Spuds', url: '../../../assets/grandpa-spuds-oxley.mp3' },
     ];
   }
 
@@ -114,9 +114,6 @@ export class RobotNarratorComponent
 
   private startEngine() {
     const eyeEls = this.eyeEls().map((ref) => ref.nativeElement);
-    this._eyeSetters = eyeEls.map(
-      (el) => gsap.quickSetter(el, 'x') as (v: number) => void
-    );
     const barEls = this.bars.map((ref) => ref.nativeElement);
     this._barSetters = barEls.map(
       (el) => gsap.quickSetter(el, 'scaleY') as (v: number) => void
@@ -132,40 +129,18 @@ export class RobotNarratorComponent
     const applyFrame = () => {
       for (let i = 0; i < half; i++) {
         const sample = this.amplitudes[(this._head + i) % ampsLength];
-        const b = scaleBarSample(sample);
+
+        const b = sample <= 0.06 ? 0 : scaleBarSample(sample);
         this._barSetters[i](b);
         this._barSetters[barsLength - 1 - i](b);
       }
       if (barsLength % 2 === 1) {
         const sample = this.amplitudes[(this._head + half) % ampsLength];
-        this._barSetters[half](scaleBarSample(sample));
+        const b = sample <= 0.06 ? 0 : sample;
+        this._barSetters[half](b);
       }
       this._head = (this._head + 1) % ampsLength;
     };
-    // this.ngZone.runOutsideAngular(() => {
-    //   gsap.set(eyeEls, { transformOrigin: 'center', x: 0 });
-    //   gsap.set(barEls, { transformOrigin: 'center center', scaleY: minScale });
-
-    //   const frameDuration = 1 / Math.max(1, fps || 33);
-    //   this.tl
-    //     .clear()
-    //     // .to(this.eyeEls, {
-    //     //   x: 20,
-    //     //   duration: 0.8,
-    //     //   ease: 'sine.inOut',
-    //     //   yoyo: true,
-    //     //   repeat: -1,
-    //     // })
-    //     .to(
-    //       {},
-    //       {
-    //         duration: frameDuration,
-    //         repeat: -1,
-    //         onRepeat: applyFrame,
-    //       }
-    //     )
-    //     .pause();
-    // });
 
     this.ngZone.runOutsideAngular(() => {
       // Init transforms
@@ -173,7 +148,7 @@ export class RobotNarratorComponent
       gsap.set(eyeEls, { transformOrigin: 'center center', x: 0 });
 
       // Eye sweep params
-      const dx = 15; // pixels left/right (tune 6–14)
+      const dx = 15;
 
       const frameDuration = 1 / Math.max(1, fps || 33);
 
@@ -211,6 +186,7 @@ export class RobotNarratorComponent
 
   playWave() {
     this.tl?.play();
+    this.showScript = true;
   }
   pauseWave() {
     this.tl?.pause();

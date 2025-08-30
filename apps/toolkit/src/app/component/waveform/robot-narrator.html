@@ -6,37 +6,14 @@
 }"
 >
   <p-select
-    [options]="countries"
-    [(ngModel)]="selectedCountry"
-    optionLabel="Voice"
-    [filter]="true"
-    filterBy="name"
+    [options]="characters"
+    [(ngModel)]="selectedCharacter"
+    [checkmark]="true"
+    optionLabel="name"
     [showClear]="true"
-    placeholder="Select a Voice"
+    placeholder="Select a City"
     class="w-full md:w-56"
-  >
-    <ng-template #selectedItem let-selectedOption>
-      <div class="flex items-center gap-2">
-        <img
-          src="https://primefaces.org/cdn/primeng/images/demo/flag/flag_placeholder.png"
-          style="width: 18px"
-          alt="filler"
-        />
-        <div>{{ selectedOption.name }}</div>
-      </div>
-    </ng-template>
-    <ng-template let-country #item>
-      <div class="flex items-center gap-2">
-        <img
-          src="https://primefaces.org/cdn/primeng/images/demo/flag/flag_placeholder.png"
-          [class]="'flag flag-' + country.code.toLowerCase()"
-          style="width: 18px"
-          alt="filler"
-        />
-        <div>{{ country.name }}</div>
-      </div>
-    </ng-template>
-  </p-select>
+  />
   <svg
     id="svg5"
     viewBox="0 0 1035.29 880"
@@ -255,13 +232,13 @@
     class="audioPlayer"
     #audioElement
     controls
-    src="../../../assets/test.mp3"
+    [src]="selectedCharacter.url"
     (ended)="pauseAudio()"
   ></audio>
   <button (click)="isPlaying ? pauseAudio() : playAudio() ">
     <i class="pi pi-play"></i>
   </button>
-  <blockquote>
+  <blockquote [ngClass]="{ 'visible': showScript }">
     I reviewed the report, and everything looks consistent with the data we
     gathered. We should verify the results with one more test before making any
     final decisions. Once that’s complete, we can present our findings to the
