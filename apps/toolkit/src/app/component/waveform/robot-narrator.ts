@@ -26,7 +26,7 @@ type SimpleConfig = {
 };
 
 const DEFAULTS: SimpleConfig = {
-  fps: 20,
+  fps: 18,
   minScale: 0.25,
   maxScale: 2.2,
   gain: 1.5,
@@ -130,13 +130,13 @@ export class RobotNarratorComponent
       for (let i = 0; i < half; i++) {
         const sample = this.amplitudes[(this._head + i) % ampsLength];
 
-        const b = sample <= 0.06 ? 0 : scaleBarSample(sample);
+        const b = sample <= 0.05 ? minScale : scaleBarSample(sample);
         this._barSetters[i](b);
         this._barSetters[barsLength - 1 - i](b);
       }
       if (barsLength % 2 === 1) {
         const sample = this.amplitudes[(this._head + half) % ampsLength];
-        const b = sample <= 0.06 ? 0 : sample;
+        const b = sample <= 0.05 ? minScale : sample;
         this._barSetters[half](b);
       }
       this._head = (this._head + 1) % ampsLength;
@@ -236,6 +236,7 @@ export class RobotNarratorComponent
     audioEl.play();
     this.playWave();
     this.isPlaying = true;
+    this.showScript = true;
   }
 
   pauseAudio() {
