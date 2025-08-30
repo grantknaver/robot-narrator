@@ -10,15 +10,16 @@
   width: 100%;
   padding: 2rem 0;
 
-  @media screen and (min-width: $breakpoint-md) {
+  @media screen and (min-width: $breakpoint-sm) {
     justify-content: center;
+    padding: 5rem 0;
   }
 
   .p-select {
     width: 90%;
     max-width: 100%;
     padding: 0.5rem;
-    max-width: 350px;
+    max-width: 325px;
   }
 
   .svg-wrapper {
@@ -26,16 +27,14 @@
     max-width: 90%; // size be set for svg scalling
 
     @media screen and (min-width: $breakpoint-sm) {
-      min-width: 400px; // size be set for svg scalling
-      max-width: 400px; // size be set for svg scalling
+      min-width: 450px; // size be set for svg scalling
+      max-width: 450px; // size be set for svg scalling
     }
 
     svg {
       z-index: 2;
       width: 100%;
-      height: 100%;
-      max-width: 100%;
-      // background-color: red;
+      height: auto;
     }
   }
 
@@ -50,25 +49,21 @@
   .mobile-button {
     width: 90%;
     max-width: 400px;
-    margin: 0.8rem 0 1.5rem 0;
-    padding: 1rem 0.5rem;
+    margin: 1rem;
+    padding: 0.8rem;
 
     background-color: $dark;
     color: $primary;
     font-size: 1.5rem;
     border-radius: 5px;
 
-    @media screen and (min-width: $breakpoint-md) {
+    @media screen and (min-width: $breakpoint-sm) {
       display: none;
     }
   }
 
   .mobile-button:active {
     color: $accent;
-
-    @media screen and (min-width: $breakpoint-md) {
-      display: none;
-    }
   }
 
   .desktop-button {
@@ -80,8 +75,12 @@
     border-radius: 100px;
     font-size: 1rem;
 
-    @media screen and (min-width: $breakpoint-md) {
+    @media screen and (min-width: $breakpoint-sm) {
       display: initial;
+    }
+
+    .mobile-icon {
+      color: $primary;
     }
   }
 

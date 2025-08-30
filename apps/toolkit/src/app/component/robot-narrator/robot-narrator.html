@@ -246,7 +246,11 @@
     class="desktop-button"
     (click)="isPlaying ? pauseAudio() : playAudio() "
   >
-    <i class="pi pi-play"></i>
+    <i
+      [ngClass]="{'fas fa fa-stop' : isPlaying, 'fas fa-play' : !isPlaying }"
+      class="mobile-icon"
+    >
+    </i>
   </button>
   <!-- <blockquote [ngClass]="{ 'visible': showScript }">
     " I reviewed the report, and everything looks consistent with the data we
