@@ -54,7 +54,7 @@
 
     background-color: $dark;
     color: $primary;
-    font-size: 1.5rem;
+    font-size: $text-2;
     border-radius: 5px;
 
     @media screen and (min-width: $breakpoint-sm) {
@@ -68,12 +68,12 @@
 
   .desktop-button {
     display: none;
-    margin: 1rem 0;
+    margin: 1rem 0 1.5rem 0;
     padding: 0.5rem 0.8rem;
     background-color: $dark;
     color: $accent;
     border-radius: 100px;
-    font-size: 1rem;
+    font-size: $text-2;
 
     @media screen and (min-width: $breakpoint-sm) {
       display: initial;
@@ -90,19 +90,35 @@
     transition: opacity 1s ease-in; /* Fade in over 1 second */
   }
 
-  blockquote {
+  .mobile-quote {
+    width: 100%;
+    max-width: 80%;
     margin: 0 1rem !important;
     padding: 1rem;
     border-left: 5px solid $dark;
     padding-left: 20px;
     margin: 20px 0;
     font-style: italic;
-    color: #333;
+    color: $dark;
     background-color: $primary;
-    box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.2);
+    box-shadow: 2px 2px 10px rgba($dark, 0.2);
     opacity: 0;
     transition: opacity 2s ease-in; /* Fade in over 1 second */
-    font-size: 1.3rem;
+    font-size: $text-2;
+
+    @media screen and (min-width: $breakpoint-sm) {
+      display: none;
+    }
+  }
+
+  .mark {
+    font-weight: bold;
+    padding-right: 0.5rem;
+  }
+
+  .mark:nth-last-child {
+    padding-right: 0;
+    padding-left: 0.5rem;
   }
 
   .visible {

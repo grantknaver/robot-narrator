@@ -161,7 +161,7 @@ export class RobotNarratorComponent
           eyeEls,
           {
             x: dx,
-            duration: 4,
+            duration: 3,
             ease: 'sine.inOut',
             yoyo: true,
             repeat: -1,
