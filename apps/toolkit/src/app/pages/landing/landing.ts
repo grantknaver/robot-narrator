@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RobotNarratorComponent } from '../../component/waveform/robot-narrator';
+import { RobotNarratorComponent } from '../../component/robot-narrator/robot-narrator';
 
 @Component({
   selector: 'app-landing',
