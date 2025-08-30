@@ -12,7 +12,7 @@ export interface LoginRequest {
   providedIn: 'root',
 })
 export class AuthService {
-  private readonly baseUrl = 'http://localhost:3000/api/auth'; // Adjust base URL if needed
+  private readonly baseUrl = 'http://localhost:3000/api/Auth'; // Adjust base URL if needed
 
   constructor(private http: HttpClient) {}
 

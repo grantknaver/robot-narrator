@@ -1,0 +1,24 @@
+<form (ngSubmit)="onSubmit()" [formGroup]="form" class="fluid formgrid grid">
+  <div class="field col-12">
+    <label for="email">Email</label>
+    <input id="email" type="text" pInputText formControlName="email"
+      [ngClass]="{ 'ng-invalid': form.controls['email'].invalid && form.controls['email'].touched }" />
+    <small *ngIf="form.controls['email'].invalid && form.controls['email'].touched" class="error">
+      Please enter a valid email.
+    </small>
+  </div>
+
+  <div class="field col-12">
+    <label for="password">Password</label>
+    <p-password id="password" formControlName="password" [feedback]="false" [toggleMask]="true"
+      [ngClass]="{ 'ng-invalid': form.controls['password'].invalid && form.controls['password'].touched }"></p-password>
+    <small *ngIf="form.controls['password'].invalid && form.controls['password'].touched" class="error">
+      Password is required.
+    </small>
+  </div>
+
+  <div class="button-row">
+    <button pButton type="submit" [disabled]="form.invalid">Login</button>
+    <button pButton type="button" (click)="onCancel()">Cancel</button>
+  </div>
+</form>

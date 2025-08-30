@@ -12,7 +12,8 @@ import { provideStoreDevtools } from '@ngrx/store-devtools';
 import { AppEffects } from './state/app.effects';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { providePrimeNG } from 'primeng/config';
-import Aura from '@primeng/themes/aura';
+import Lara from '@primeng/themes/lara';
+console.log('Aura preset present?', !!Lara); // should log true
 import { HTTP_INTERCEPTORS, provideHttpClient } from '@angular/common/http';
 import { AuthInterceptor } from './interceptors/auth.interceptor';
 import { AuthErrorInterceptor } from './interceptors/auth-error.interceptor';
@@ -47,8 +48,10 @@ export const appConfig: ApplicationConfig = {
     provideAnimationsAsync(),
     providePrimeNG({
       theme: {
-        preset: Aura,
+        preset: Lara,
       },
+      ripple: true,
+      inputVariant: 'outlined',
     }),
   ],
 };
