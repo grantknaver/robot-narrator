@@ -6,18 +6,17 @@ import {
   ElementRef,
   NgZone,
   OnInit,
-  ViewChildren,
-  QueryList,
   ChangeDetectorRef,
   viewChild,
   viewChildren,
   Input,
-  Signal,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { gsap } from 'gsap';
 import { map, Observable, of, shareReplay, take, tap } from 'rxjs';
+import { SelectModule } from 'primeng/select';
+import { FormsModule } from '@angular/forms';
 
 type SimpleConfig = {
   fps: number;
@@ -36,7 +35,7 @@ const DEFAULTS: SimpleConfig = {
 @Component({
   selector: 'app-robot-narrator',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, SelectModule, FormsModule],
   templateUrl: './robot-narrator.html',
   styleUrls: ['./robot-narrator.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -63,6 +62,9 @@ export class RobotNarratorComponent
   isPlaying = false;
   character = 'Narrator';
 
+  countries: any[] | undefined;
+  selectedCountry: string | undefined;
+
   constructor(
     private ngZone: NgZone,
     private http: HttpClient,
@@ -72,6 +74,18 @@ export class RobotNarratorComponent
   ngOnInit(): void {
     this._cfg = { ...DEFAULTS, ...this.config };
     this.getAmplitudes();
+    this.countries = [
+      { name: 'Australia', code: 'AU' },
+      { name: 'Brazil', code: 'BR' },
+      { name: 'China', code: 'CN' },
+      { name: 'Egypt', code: 'EG' },
+      { name: 'France', code: 'FR' },
+      { name: 'Germany', code: 'DE' },
+      { name: 'India', code: 'IN' },
+      { name: 'Japan', code: 'JP' },
+      { name: 'Spain', code: 'ES' },
+      { name: 'United States', code: 'US' },
+    ];
   }
 
   ngAfterViewInit(): void {

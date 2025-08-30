@@ -1,16 +1,16 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { WaveformComponent } from './robot-narrator';
+import { RobotNarratorComponent } from './robot-narrator';
 
 describe('WaveNarrationComponent', () => {
-  let component: WaveformComponent;
-  let fixture: ComponentFixture<WaveformComponent>;
+  let component: RobotNarratorComponent;
+  let fixture: ComponentFixture<RobotNarratorComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [WaveformComponent],
+      imports: [RobotNarratorComponent],
     }).compileComponents();
 
-    fixture = TestBed.createComponent(WaveformComponent);
+    fixture = TestBed.createComponent(RobotNarratorComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

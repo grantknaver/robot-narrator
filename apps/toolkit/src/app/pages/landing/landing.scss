@@ -6,4 +6,22 @@
 
 .container {
   @include flexFill('column');
+  max-width: 100%;
+
+  .p-select {
+  }
+
+  .app-robot-narrator {
+    @include flexFill('column');
+    width: 100%;
+  }
+
+  button {
+    max-width: 100px;
+    padding: 1rem;
+  }
+
+  blockquote {
+    text-align: center;
+  }
 }
