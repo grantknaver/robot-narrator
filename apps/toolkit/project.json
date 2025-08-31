@@ -22,7 +22,10 @@
             "input": "apps/toolkit/public"
           }
         ],
-        "styles": ["apps/toolkit/src/styles.scss"],
+        "styles": [
+          "apps/toolkit/src/styles.scss",
+          "node_modules/primeflex/primeflex.css"
+        ],
         "stylePreprocessorOptions": {
           "includePaths": ["apps/toolkit/src/styles"]
         },

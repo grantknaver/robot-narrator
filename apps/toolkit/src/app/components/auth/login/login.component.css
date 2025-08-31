@@ -7,10 +7,3 @@
 .ng-invalid.ng-touched {
   border: 1px solid red;
 }
-
-.button-row {
-  display: flex;
-  flex-direction: row;
-  justify-content: flex-end;
-  gap: 10px;
-}

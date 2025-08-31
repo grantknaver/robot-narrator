@@ -1,24 +1,27 @@
-<form (ngSubmit)="onSubmit()" [formGroup]="form" class="fluid formgrid grid">
-  <div class="field col-12">
-    <label for="email">Email</label>
-    <input id="email" type="text" pInputText formControlName="email"
+<form class="grid formgrid gap-3" (ngSubmit)="onSubmit()" [formGroup]="form">
+  <div class="field grid col-12">
+    <label for="email" class="col-12 md:col-3">Email</label>
+    <input id="email" class="col-12 md:col-9 inputtext-lg" type="text" pInputText formControlName="email"
       [ngClass]="{ 'ng-invalid': form.controls['email'].invalid && form.controls['email'].touched }" />
     <small *ngIf="form.controls['email'].invalid && form.controls['email'].touched" class="error">
       Please enter a valid email.
     </small>
   </div>
 
-  <div class="field col-12">
-    <label for="password">Password</label>
-    <p-password id="password" formControlName="password" [feedback]="false" [toggleMask]="true"
-      [ngClass]="{ 'ng-invalid': form.controls['password'].invalid && form.controls['password'].touched }"></p-password>
-    <small *ngIf="form.controls['password'].invalid && form.controls['password'].touched" class="error">
-      Password is required.
-    </small>
+  <div class="field grid col-12">
+    <label for="password" class="col-12 md:col-3">Password</label>
+    <div class="col-12 md:col-9">
+      <p-password id="password" formControlName="password" [feedback]="false" inputStyleClass="inputtext-lg"
+        [toggleMask]="true"
+        [ngClass]="{ 'ng-invalid': form.controls['password'].invalid && form.controls['password'].touched }"></p-password>
+      <small *ngIf="form.controls['password'].invalid && form.controls['password'].touched" class="error">
+        Password is required.
+      </small>
+    </div>
   </div>
 
-  <div class="button-row">
-    <button pButton type="submit" [disabled]="form.invalid">Login</button>
-    <button pButton type="button" (click)="onCancel()">Cancel</button>
+  <div class="col-12 flex justify-content-end gap-2 mt-2">
+    <button severity="info" pButton type="submit" [disabled]="form.invalid">Login</button>
+    <button severity="secondary" pButton type="button" (click)="onCancel()">Cancel</button>
   </div>
 </form>
