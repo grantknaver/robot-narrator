@@ -3,11 +3,8 @@ import { CommonModule } from '@angular/common';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
 import { Store } from '@ngrx/store';
-import { login, logout } from '../../state/auth/auth.actions';
-import {
-  selectAuthenticatedUser,
-  selectIsAuthenticated,
-} from '../../state/auth/auth.selectors';
+import { logout } from '../../state/auth/auth.actions';
+import { selectAuthenticatedUser } from '../../state/auth/auth.selectors';
 import { User } from '../../models/user.interface';
 import { LoginComponent } from '../../components/auth/login/login.component';
 

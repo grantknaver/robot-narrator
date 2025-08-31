@@ -7,6 +7,7 @@ import {
 } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable, tap } from 'rxjs';
+import { TOKEN_KEY } from '../shared/constants';
 
 @Injectable()
 export class AuthInterceptor implements HttpInterceptor {
@@ -34,7 +35,7 @@ export class AuthInterceptor implements HttpInterceptor {
         if (event instanceof HttpResponse) {
           const newToken = event.headers.get('Authorization');
           if (newToken?.startsWith('Bearer ')) {
-            localStorage.setItem('accessToken', newToken.slice(7));
+            localStorage.setItem(TOKEN_KEY, newToken.slice(7));
           }
         }
       })

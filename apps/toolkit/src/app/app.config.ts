@@ -5,7 +5,6 @@ import {
 } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { appRoutes } from './app.routes';
-import { provideStore, provideState } from '@ngrx/store';
 import { provideEffects } from '@ngrx/effects';
 import { appReducer } from './state/app.reducer';
 import { provideStoreDevtools } from '@ngrx/store-devtools';
@@ -18,6 +17,7 @@ import { AuthInterceptor } from './interceptors/auth.interceptor';
 import { AuthErrorInterceptor } from './interceptors/auth-error.interceptor';
 import { authReducer } from './state/auth/auth.reducer';
 import { AuthEffects } from './state/auth/auth.effects';
+import { provideState, provideStore } from '@ngrx/store';
 
 export const appConfig: ApplicationConfig = {
   providers: [
