@@ -20,7 +20,7 @@ export const loginFailure = createAction(
 
 export const tokenRestored = createAction(
   '[Auth] Token Restored',
-  props<{ token: string; user: User }>()
+  props<{ user: User }>()
 );
 
 export const logout = createAction('[Auth] Logout');

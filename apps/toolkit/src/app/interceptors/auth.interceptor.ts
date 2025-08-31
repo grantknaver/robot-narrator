@@ -15,7 +15,8 @@ export class AuthInterceptor implements HttpInterceptor {
     req: HttpRequest<any>,
     next: HttpHandler
   ): Observable<HttpEvent<any>> {
-    const token = localStorage.getItem('accessToken');
+    console.log('hi from the authInterceptor');
+    const token = localStorage.getItem(TOKEN_KEY);
 
     // Don't attach token to auth routes
     const isAuthRoute =
@@ -33,9 +34,14 @@ export class AuthInterceptor implements HttpInterceptor {
     return next.handle(authReq).pipe(
       tap((event) => {
         if (event instanceof HttpResponse) {
-          const newToken = event.headers.get('Authorization');
-          if (newToken?.startsWith('Bearer ')) {
-            localStorage.setItem(TOKEN_KEY, newToken.slice(7));
+          const raw =
+            event.headers.get('X-New-Access-Token') ??
+            event.headers.get('x-new-access-token');
+          const token = raw?.trim();
+          if (token) {
+            const match = /^Bearer\s+(.+)$/i.exec(token);
+            const naked = match ? match[1] : token;
+            localStorage.setItem(TOKEN_KEY, naked);
           }
         }
       })

@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { initializeApp } from './state/app.actions';
@@ -10,7 +10,7 @@ import { selectInitialized } from './state/app.selectors';
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss',
 })
-export class AppComponent {
+export class AppComponent implements OnInit {
   constructor(private store: Store) {}
 
   ngOnInit(): void {

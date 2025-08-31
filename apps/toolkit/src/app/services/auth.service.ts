@@ -25,17 +25,4 @@ export class AuthService {
   logout(): Observable<void> {
     return this.http.post<void>(`${this.baseUrl}/logout`, {});
   }
-
-  hasValidToken(): boolean {
-    const token = localStorage.getItem(TOKEN_KEY);
-    if (!token) return false;
-    try {
-      const { exp } = jwtDecode<JwtPayload>(token);
-      if (!exp) return true; // no exp => treat as valid
-      const nowSec = Math.floor(Date.now() / 1000);
-      return exp > nowSec;
-    } catch {
-      return false;
-    }
-  }
 }
