@@ -1,11 +1,13 @@
 /* You can add global styles to this file, and also import other style files */
 @use 'styles/src/index' as *;
-@import "primeicons/primeicons.css";
+@import 'primeicons/primeicons.css';
 
-
-html, body {
+html,
+body {
   height: 100%;
   margin: 0;
+  font-family: 'Roboto', 'Open Sans', 'Lato', 'Noto Sans', 'Source Sans 3',
+    'Poppins', 'Nunito', 'Work Sans', sans-serif;
 }
 
 app-root {
@@ -20,6 +22,22 @@ app-root .route-slot > router-outlet + * {
 
 // ---------------------------
 
-.play-button .p-button-icon, .p-button-icon:before, .p-button-icon:after {
+.play-button .p-button-icon,
+.p-button-icon:before,
+.p-button-icon:after {
   font-size: 5rem;
+}
+
+.feature-accordion .p-accordionheader {
+  padding-bottom: 0 !important;
+}
+
+.character-selector .p-select-option.p-select-option-selected.p-focus {
+  background: $dark !important;
+  color: $primary !important;
+}
+
+.character-selector .p-select-option.p-select-option-selected {
+  background: $dark !important;
+  color: $primary !important;
 }

@@ -10,6 +10,7 @@ import {
   viewChild,
   viewChildren,
   Input,
+  output,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
@@ -17,6 +18,7 @@ import { gsap } from 'gsap';
 import { map, Observable, of, shareReplay, take, tap } from 'rxjs';
 import { SelectModule } from 'primeng/select';
 import { FormsModule } from '@angular/forms';
+import { DividerModule } from 'primeng/divider';
 
 type SimpleConfig = {
   fps: number;
@@ -40,7 +42,7 @@ interface Character {
 @Component({
   selector: 'app-robot-narrator',
   standalone: true,
-  imports: [CommonModule, SelectModule, FormsModule],
+  imports: [CommonModule, SelectModule, FormsModule, DividerModule],
   templateUrl: './robot-narrator.html',
   styleUrls: ['./robot-narrator.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -49,6 +51,7 @@ export class RobotNarratorComponent
   implements OnInit, AfterViewInit, OnDestroy
 {
   @Input() config: Partial<SimpleConfig> = { ...DEFAULTS };
+  readonly startAudio = output<boolean>();
 
   private _head = 0;
   private _cfg!: SimpleConfig;
@@ -64,8 +67,6 @@ export class RobotNarratorComponent
   audioElement = viewChild<ElementRef>('audioElement');
   tl: gsap.core.Timeline = gsap.timeline({ repeat: -1, paused: true });
   isPlaying = false;
-  character = 'Narrator';
-  showScript = false;
 
   characters: Character[] = [];
   selectedCharacter: Character = {
@@ -161,7 +162,7 @@ export class RobotNarratorComponent
           eyeEls,
           {
             x: dx,
-            duration: 3,
+            duration: 2,
             ease: 'sine.inOut',
             yoyo: true,
             repeat: -1,
@@ -186,7 +187,7 @@ export class RobotNarratorComponent
 
   playWave() {
     this.tl?.play();
-    this.showScript = true;
+    this.startAudio.emit(true);
   }
   pauseWave() {
     this.tl?.pause();
@@ -236,7 +237,6 @@ export class RobotNarratorComponent
     audioEl.play();
     this.playWave();
     this.isPlaying = true;
-    this.showScript = true;
   }
 
   pauseAudio() {
