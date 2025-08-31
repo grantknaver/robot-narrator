@@ -1,8 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
-import { Store } from '@ngrx/store';
 import { exhaustMap, of, mergeMap, catchError } from 'rxjs';
-import { AuthService } from '../services/auth.service';
 import { initializeApp, appInitialized } from './app.actions';
 import * as AuthActions from '../state/auth/auth.actions';
 import { UserResponse, UserService } from '../services/user.service';
@@ -12,11 +10,7 @@ import { getUserIdFromToken, hasValidToken } from '../shared/utils/jwtUtils';
 export class AppEffects {
   initialize$;
 
-  constructor(
-    private actions$: Actions,
-    private authService: AuthService,
-    private userService: UserService
-  ) {
+  constructor(private actions$: Actions, private userService: UserService) {
     this.initialize$ = createEffect(() =>
       this.actions$.pipe(
         ofType(initializeApp),
