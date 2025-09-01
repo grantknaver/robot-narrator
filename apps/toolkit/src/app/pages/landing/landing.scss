@@ -1,0 +1,130 @@
+@use 'styles/src/index' as *;
+
+:host {
+  @include flexFill('column');
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+.container {
+  @include flexFill('column');
+  max-width: 100%;
+  justify-content: center;
+  align-items: start;
+
+  @media screen and (min-width: $breakpoint-md) {
+    flex-direction: row;
+    align-items: stretch;
+  }
+
+  .app-robot-narrator {
+    @include flexFill('column');
+    width: 100%;
+    margin-top: 2rem;
+
+    @media screen and (min-width: $breakpoint-md) {
+      margin-top: 0;
+      width: 40%;
+      justify-content: start;
+    }
+  }
+
+  .header-container {
+    width: 100%;
+    background-color: $dark;
+
+    h2 {
+      font-size: $header-h2;
+      text-align: left;
+      margin-left: 1rem;
+      color: $primary;
+    }
+  }
+
+  .mobile-content {
+    @include flexFill('column');
+    align-items: center;
+    @media screen and (min-width: $breakpoint-md) {
+      display: none;
+    }
+
+    .mobile-quote {
+      width: 100%;
+      max-width: 80%;
+      margin: 0 1rem;
+      padding: 1rem;
+      border-left: 5px solid $dark;
+      padding-left: 20px;
+      margin: 20px 0;
+      font-style: italic;
+      color: $dark;
+      background-color: $primary;
+      box-shadow: 2px 2px 10px rgba($dark, 0.2);
+      font-size: $text-2;
+
+      @media screen and (min-width: $breakpoint-sm) {
+        display: none;
+      }
+    }
+
+    .accordion-container {
+      padding: 1rem;
+    }
+  }
+
+  .desktop-content-left {
+    display: none;
+
+    @media screen and (min-width: $breakpoint-md) {
+      @include flexFill('column');
+      width: 30%;
+      padding: 0;
+      padding-right: 0;
+
+      h2 {
+        margin: 1rem;
+      }
+    }
+
+    .accordion-container {
+      @media screen and (min-width: $breakpoint-md) {
+        @include flexFill('column');
+      }
+    }
+  }
+
+  .desktop-content-right {
+    display: none;
+    @media screen and (min-width: $breakpoint-md) {
+      @include flexFill('column');
+      justify-content: center;
+      align-items: center;
+      width: 30%;
+
+      .desktop-quote {
+        position: relative;
+        width: 100%;
+        max-width: 80%;
+        margin: 0 1rem;
+        padding: 1rem;
+        border-left: 5px solid $dark;
+        padding-left: 20px;
+        margin: 1.5rem 0;
+        font-style: italic;
+        color: $dark;
+        background-color: $primary;
+        font-size: 1.5rem;
+      }
+    }
+  }
+
+  .mark {
+    font-weight: bold;
+    padding-right: 0.5rem;
+  }
+
+  .mark:nth-last-child {
+    padding-right: 0;
+    padding-left: 0.5rem;
+  }
+}

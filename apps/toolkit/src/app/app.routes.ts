@@ -1,23 +1,14 @@
 import { Route } from '@angular/router';
 import { LayoutComponent } from './layout/layout.component';
 import { authGuard } from './guards/auth.guard';
+import { LandingComponent } from './pages/landing/landing';
 
 export const appRoutes: Route[] = [
   {
     path: '',
     component: LayoutComponent,
     children: [
-      {
-        path: '',
-        pathMatch: 'full',
-        loadComponent: () =>
-          import('./pages/home/home.component').then((m) => m.HomeComponent),
-      },
-      {
-        path: 'home',
-        loadComponent: () =>
-          import('./pages/home/home.component').then((m) => m.HomeComponent),
-      },
+      { path: '', pathMatch: 'full', component: LandingComponent },
       {
         path: 'userdashboard',
         loadComponent: () =>

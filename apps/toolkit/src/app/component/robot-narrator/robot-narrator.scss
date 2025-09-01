@@ -1,0 +1,92 @@
+@use 'styles/src/index' as *;
+
+:host {
+  @include flexFill('column');
+}
+
+.container {
+  @include flexFill('column');
+  flex: 0;
+  align-items: center;
+  width: 100%;
+  padding: 0;
+
+  .p-select {
+    width: 70%;
+    max-width: 100%;
+    padding: 0.5rem;
+    max-width: 325px;
+  }
+
+  .svg-wrapper {
+    width: 100%; // size be set for svg scalling
+    max-width: 90%; // size be set for svg scalling
+
+    @media screen and (min-width: $breakpoint-sm) {
+      min-width: 450px; // size be set for svg scalling
+      max-width: 450px; // size be set for svg scalling
+    }
+
+    svg {
+      z-index: 2;
+      width: 100%;
+      height: auto;
+    }
+  }
+
+  .audioPlayer {
+    top: 0;
+    z-index: 1;
+    visibility: hidden;
+    width: 1px;
+    height: 1px;
+  }
+
+  .mobile-button {
+    width: 60%;
+    max-width: 400px;
+    margin: 1rem;
+    padding: 0.8rem;
+
+    background-color: $dark;
+    color: $primary;
+    font-size: $text-2;
+    border-radius: 5px;
+
+    @media screen and (min-width: $breakpoint-sm) {
+      display: none;
+    }
+  }
+
+  .mobile-button:active {
+    color: $accent;
+  }
+
+  .desktop-button {
+    display: none;
+    margin: 1rem 0 1.5rem 0;
+    padding: 0.5rem 0.8rem;
+    background-color: $dark;
+    color: $accent;
+    border-radius: 100px;
+    font-size: $text-2;
+
+    @media screen and (min-width: $breakpoint-sm) {
+      display: initial;
+    }
+
+    .mobile-icon {
+      color: $primary;
+    }
+  }
+
+  .desktop-button:active {
+    border: solid $accent 2px;
+    opacity: 0;
+    transition: opacity 1s ease-in; /* Fade in over 1 second */
+  }
+}
+
+.p-select-option.p-select-option-selected.p-focus {
+  display: none !important;
+}

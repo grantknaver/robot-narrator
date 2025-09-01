@@ -15,7 +15,9 @@
     "skipLibCheck": true,
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
-    "paths": {}
+    "paths": {
+      "@storytaim/styles": ["libs/styles/src/index.ts"]
+    }
   },
   "exclude": ["node_modules", "tmp"]
 }

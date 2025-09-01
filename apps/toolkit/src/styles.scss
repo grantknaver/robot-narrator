@@ -1,16 +1,43 @@
+/* You can add global styles to this file, and also import other style files */
+@use 'styles/src/index' as *;
 @import 'primeicons/primeicons.css';
 
 html,
 body {
   margin: 0;
-  padding: 0;
-  height: 100%;
-  overflow: hidden;
-  box-sizing: border-box;
+  font-family: 'Roboto', 'Open Sans', 'Lato', 'Noto Sans', 'Source Sans 3',
+    'Poppins', 'Nunito', 'Work Sans', sans-serif;
 }
 
-*,
-*::before,
-*::after {
-  box-sizing: inherit;
+app-root {
+  display: block;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+/* or, a bit more specific to your layout */
+app-root .route-slot > router-outlet + * {
+  @include flexFill('column');
+}
+
+// ----------Primeng Overrides----------
+
+.play-button .p-button-icon,
+.p-button-icon:before,
+.p-button-icon:after {
+  font-size: 5rem;
+}
+
+.feature-accordion .p-accordionheader {
+  padding-bottom: 0 !important;
+}
+
+.character-selector .p-select-option.p-select-option-selected.p-focus {
+  background: $dark !important;
+  color: $primary !important;
+}
+
+.character-selector .p-select-option.p-select-option-selected {
+  background: $dark !important;
+  color: $primary !important;
 }

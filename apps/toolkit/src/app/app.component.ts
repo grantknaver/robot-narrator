@@ -3,6 +3,10 @@ import { RouterModule } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { initializeApp } from './state/app.actions';
 import { selectInitialized } from './state/app.selectors';
+import { gsap } from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+
+gsap.registerPlugin(ScrollTrigger);
 
 @Component({
   imports: [RouterModule],

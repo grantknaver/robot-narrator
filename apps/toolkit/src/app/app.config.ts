@@ -57,5 +57,6 @@ export const appConfig: ApplicationConfig = {
       ripple: true,
       inputVariant: 'outlined',
     }),
+    provideHttpClient(withInterceptorsFromDi()),
   ],
 };

@@ -1,0 +1,190 @@
+<div class="container">
+  <div class="desktop-content-left">
+    <div class="header-container"><h2 class="text-h2">Features</h2></div>
+    <div class="accordion-container">
+      <p-accordion class="feature-accordion" value="0">
+        <p-accordion-panel value="0">
+          <p-accordion-header>Multiple Characters</p-accordion-header>
+          <p-accordion-content>
+            <p class="m-0">
+              No more one-size-fits-all narration. Each story can be voiced with
+              multiple distinct characters, giving dialogue depth and
+              authenticity. Listeners can instantly recognize who’s speaking,
+              while authors gain a powerful tool for making their worlds more
+              immersive.
+            </p>
+          </p-accordion-content>
+        </p-accordion-panel>
+
+        <p-accordion-panel value="1">
+          <p-accordion-header>Multiple Voices</p-accordion-header>
+          <p-accordion-content>
+            <p class="m-0">
+              Flexibility meets creativity. Choose from a variety of voices that
+              fit the tone and personality of your work — from epic narrators to
+              subtle conversational tones. This ensures every story has the
+              perfect soundscape, tailored to the author’s vision.
+            </p>
+          </p-accordion-content>
+        </p-accordion-panel>
+
+        <p-accordion-panel value="2">
+          <p-accordion-header>Character Emotions</p-accordion-header>
+          <p-accordion-content>
+            <p class="m-0">
+              Emotions make stories unforgettable. With expressive delivery,
+              characters can laugh, cry, shout, or whisper with genuine feeling.
+              Authors can control the mood, while listeners experience narration
+              that captures the heart of every scene.
+            </p>
+          </p-accordion-content>
+        </p-accordion-panel>
+
+        <p-accordion-panel value="3">
+          <p-accordion-header>Targeted Reruns</p-accordion-header>
+          <p-accordion-content>
+            <p class="m-0">
+              Perfecting narration doesn’t mean starting from scratch. With
+              targeted re-runs, you can instantly replay specific sections of
+              text — whether it’s a single line of dialogue or an entire scene.
+              Want to try it with a different voice? Add a touch more emotion?
+              No problem. Authors can fine-tune delivery on demand, making sure
+              every moment sounds exactly how they imagined.
+            </p>
+          </p-accordion-content>
+        </p-accordion-panel>
+        <p-accordion-panel value="4">
+          <p-accordion-header>Audio Store</p-accordion-header>
+          <p-accordion-content>
+            <p class="m-0">
+              Publishing doesn’t end with the written word. Our built-in audio
+              store provides new ways for authors to share and monetize their
+              work. Fans can support creators directly, explore unique audio
+              experiences, and even collect the stories they love most.
+            </p>
+          </p-accordion-content>
+        </p-accordion-panel>
+        <p-accordion-panel value="5">
+          <p-accordion-header>Community Involvement</p-accordion-header>
+          <p-accordion-content>
+            <p class="m-0">
+              Storytelling is no longer one-directional. Fans can become part of
+              the creative journey by suggesting ideas, influencing outcomes, or
+              engaging with content in exciting new ways — always with the
+              author’s guidance. This makes every project a collaboration
+              between creator and community.
+            </p>
+          </p-accordion-content>
+        </p-accordion-panel>
+      </p-accordion>
+    </div>
+  </div>
+  <div class="app-robot-narrator">
+    <app-robot-narrator (startAudio)="showScript = true" />
+  </div>
+  <div class="desktop-content-right">
+    <blockquote
+      *ngIf="showScript"
+      @rightFade
+      class="desktop-quote"
+      [ngClass]="{ 'visible': showScript }"
+    >
+      I reviewed the report, and everything looks consistent with the data we
+      gathered. We should verify the results with one more test before making
+      any final decisions. Once that’s complete, we can present our findings to
+      the team.
+    </blockquote>
+  </div>
+  <div class="mobile-content">
+    <blockquote
+      *ngIf="showScript"
+      @fadeIn
+      class="mobile-quote"
+      [ngClass]="{ 'visible': showScript }"
+    >
+      <span class="mark">"</span>I reviewed the report, and everything looks
+      consistent with the data we gathered. We should verify the results with
+      one more test before making any final decisions. Once that’s complete, we
+      can present our findings to the team.<span class="mark">"</span>
+    </blockquote>
+    <p-divider />
+    <div class="header-container"><h2 class="text-h2">Features</h2></div>
+    <div class="accordion-container">
+      <p-accordion value="0">
+        <p-accordion-panel value="0">
+          <p-accordion-header>Multiple Characters</p-accordion-header>
+          <p-accordion-content>
+            <p class="m-0">
+              No more one-size-fits-all narration. Each story can be voiced with
+              multiple distinct characters, giving dialogue depth and
+              authenticity. Listeners can instantly recognize who’s speaking,
+              while authors gain a powerful tool for making their worlds more
+              immersive.
+            </p>
+          </p-accordion-content>
+        </p-accordion-panel>
+
+        <p-accordion-panel value="1">
+          <p-accordion-header>Multiple Voices</p-accordion-header>
+          <p-accordion-content>
+            <p class="m-0">
+              Flexibility meets creativity. Choose from a variety of voices that
+              fit the tone and personality of your work — from epic narrators to
+              subtle conversational tones. This ensures every story has the
+              perfect soundscape, tailored to the author’s vision.
+            </p>
+          </p-accordion-content>
+        </p-accordion-panel>
+
+        <p-accordion-panel value="2">
+          <p-accordion-header>Character Emotions</p-accordion-header>
+          <p-accordion-content>
+            <p class="m-0">
+              Emotions make stories unforgettable. With expressive delivery,
+              characters can laugh, cry, shout, or whisper with genuine feeling.
+              Authors can control the mood, while listeners experience narration
+              that captures the heart of every scene.
+            </p>
+          </p-accordion-content>
+        </p-accordion-panel>
+
+        <p-accordion-panel value="3">
+          <p-accordion-header>Targeted Reruns</p-accordion-header>
+          <p-accordion-content>
+            <p class="m-0">
+              Perfecting narration doesn’t mean starting from scratch. With
+              targeted re-runs, you can instantly replay specific sections of
+              text — whether it’s a single line of dialogue or an entire scene.
+              Want to try it with a different voice? Add a touch more emotion?
+              No problem. Authors can fine-tune delivery on demand, making sure
+              every moment sounds exactly how they imagined.
+            </p>
+          </p-accordion-content>
+        </p-accordion-panel>
+        <p-accordion-panel value="4">
+          <p-accordion-header>Audio Store</p-accordion-header>
+          <p-accordion-content>
+            <p class="m-0">
+              Publishing doesn’t end with the written word. Our built-in audio
+              store provides new ways for authors to share and monetize their
+              work. Fans can support creators directly, explore unique audio
+              experiences, and even collect the stories they love most.
+            </p>
+          </p-accordion-content>
+        </p-accordion-panel>
+        <p-accordion-panel value="5">
+          <p-accordion-header>Community Involvement</p-accordion-header>
+          <p-accordion-content>
+            <p class="m-0">
+              Storytelling is no longer one-directional. Fans can become part of
+              the creative journey by suggesting ideas, influencing outcomes, or
+              engaging with content in exciting new ways — always with the
+              author’s guidance. This makes every project a collaboration
+              between creator and community.
+            </p>
+          </p-accordion-content>
+        </p-accordion-panel>
+      </p-accordion>
+    </div>
+  </div>
+</div>
