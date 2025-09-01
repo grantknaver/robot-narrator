@@ -13,11 +13,13 @@ body {
 app-root {
   display: block;
   height: 100%;
+  background-color: orange;
 }
 
 /* or, a bit more specific to your layout */
 app-root .route-slot > router-outlet + * {
   @include flexFill('column');
+  background-color: red;
 }
 
 // ---------------------------

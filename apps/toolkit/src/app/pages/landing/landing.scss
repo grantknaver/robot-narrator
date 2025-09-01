@@ -2,34 +2,33 @@
 
 :host {
   @include flexFill('column');
+  background-color: purple;
 }
 
 .container {
   @include flexFill('column');
-  flex: 0 1 auto;
+  height: 100%;
   max-width: 100%;
   justify-content: center;
-  align-items: center;
+  align-items: start;
+  background-color: grey;
 
   @media screen and (min-width: $breakpoint-md) {
-    flex: 1 1 auto;
     flex-direction: row;
+    align-items: stretch;
   }
 
   .app-robot-narrator {
     @include flexFill('column');
     width: 100%;
     margin-top: 2rem;
+    background-color: red;
 
     @media screen and (min-width: $breakpoint-md) {
       margin-top: 0;
       width: 40%;
+      justify-content: start;
     }
-  }
-
-  button {
-    max-width: 100px;
-    padding: 1rem;
   }
 
   .header-container {
@@ -80,13 +79,21 @@
 
     @media screen and (min-width: $breakpoint-md) {
       @include flexFill('column');
-      height: 100%;
       width: 30%;
       padding: 1rem;
       padding-right: 0;
+      background-color: gold;
 
       h2 {
         margin: 1rem;
+      }
+    }
+
+    .accordion-container {
+      @media screen and (min-width: $breakpoint-md) {
+        @include flexFill('column');
+        // background-color: black;
+        // display: none;
       }
     }
   }
@@ -96,23 +103,24 @@
     @media screen and (min-width: $breakpoint-md) {
       @include flexFill('column');
       justify-content: center;
-      height: 100%;
+      align-items: center;
       width: 30%;
-    }
+      background-color: aqua;
 
-    .desktop-quote {
-      position: relative;
-      width: 100%;
-      max-width: 80%;
-      margin: 0 1rem;
-      padding: 1rem;
-      border-left: 5px solid $dark;
-      padding-left: 20px;
-      margin: 1.5rem 0;
-      font-style: italic;
-      color: $dark;
-      background-color: $primary;
-      font-size: 1.5rem;
+      .desktop-quote {
+        position: relative;
+        width: 100%;
+        max-width: 80%;
+        margin: 0 1rem;
+        padding: 1rem;
+        border-left: 5px solid $dark;
+        padding-left: 20px;
+        margin: 1.5rem 0;
+        font-style: italic;
+        color: $dark;
+        background-color: $primary;
+        font-size: 1.5rem;
+      }
     }
   }
 

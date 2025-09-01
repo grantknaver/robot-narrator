@@ -6,9 +6,11 @@
 
 .container {
   @include flexFill('column');
+  flex: 0;
   align-items: center;
   width: 100%;
   padding: 0;
+  background-color: pink;
 
   @media screen and (min-width: $breakpoint-sm) {
     justify-content: center;

@@ -29,18 +29,18 @@ import { AccordionModule } from 'primeng/accordion';
         ),
       ]),
     ]),
-    // trigger('rightFade', [
-    //   transition(':enter', [
-    //     style({ opacity: 0, transform: 'translateX(1rem) scale(.98)' }),
-    //     animate('300ms ease-out', style({ opacity: 1, transform: 'none' })),
-    //   ]),
-    //   transition(':leave', [
-    //     animate(
-    //       '200ms ease-in',
-    //       style({ opacity: 0, transform: 'translateX(8px) scale(.98)' })
-    //     ),
-    //   ]),
-    // ]),
+    trigger('rightFade', [
+      transition(':enter', [
+        style({ opacity: 0, transform: 'translateX(1rem) scale(.98)' }),
+        animate('300ms ease-out', style({ opacity: 1, transform: 'none' })),
+      ]),
+      transition(':leave', [
+        animate(
+          '200ms ease-in',
+          style({ opacity: 0, transform: 'translateX(8px) scale(.98)' })
+        ),
+      ]),
+    ]),
   ],
 })
 export class LandingComponent {
