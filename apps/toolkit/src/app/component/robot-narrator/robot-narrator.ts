@@ -67,7 +67,6 @@ export class RobotNarratorComponent
   audioElement = viewChild<ElementRef>('audioElement');
   tl: gsap.core.Timeline = gsap.timeline({ repeat: -1, paused: true });
   isPlaying = false;
-
   characters: Character[] = [];
   selectedCharacter: Character = {
     name: 'Austin',
@@ -99,6 +98,11 @@ export class RobotNarratorComponent
       take(1),
       tap(() => this.startEngine())
     );
+  }
+
+  test() {
+    console.log('changed');
+    alert('TESET');
   }
 
   getAmplitudes() {
@@ -198,6 +202,7 @@ export class RobotNarratorComponent
 
     this.tl.pause();
     const v = this._cfg.minScale;
+    this.isPlaying = false;
     for (const set of this._barSetters) set(v);
   }
 
