@@ -2,8 +2,8 @@
 
 :host {
   @include flexFill('column');
-  min-height: 100vh;
-  min-height: 100dvh;
+  // min-height: 100vh;
+  // min-height: 100dvh;
 }
 
 .container {
@@ -24,6 +24,7 @@
 
     @media screen and (min-width: $breakpoint-md) {
       margin-top: 0;
+      padding-top: 1rem;
       width: 40%;
       justify-content: start;
     }
@@ -74,6 +75,7 @@
 
   .desktop-content-left {
     display: none;
+    background-color: yellow;
 
     @media screen and (min-width: $breakpoint-md) {
       @include flexFill('column');
@@ -95,6 +97,7 @@
 
   .desktop-content-right {
     display: none;
+    background-color: green;
     @media screen and (min-width: $breakpoint-md) {
       @include flexFill('column');
       justify-content: center;
