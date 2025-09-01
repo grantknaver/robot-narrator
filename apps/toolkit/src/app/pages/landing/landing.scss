@@ -2,16 +2,15 @@
 
 :host {
   @include flexFill('column');
-  background-color: purple;
+  min-height: 100vh;
+  min-height: 100dvh;
 }
 
 .container {
   @include flexFill('column');
-  height: 100%;
   max-width: 100%;
   justify-content: center;
   align-items: start;
-  background-color: grey;
 
   @media screen and (min-width: $breakpoint-md) {
     flex-direction: row;
@@ -22,7 +21,6 @@
     @include flexFill('column');
     width: 100%;
     margin-top: 2rem;
-    background-color: red;
 
     @media screen and (min-width: $breakpoint-md) {
       margin-top: 0;
@@ -80,9 +78,8 @@
     @media screen and (min-width: $breakpoint-md) {
       @include flexFill('column');
       width: 30%;
-      padding: 1rem;
+      padding: 0;
       padding-right: 0;
-      background-color: gold;
 
       h2 {
         margin: 1rem;
@@ -92,8 +89,6 @@
     .accordion-container {
       @media screen and (min-width: $breakpoint-md) {
         @include flexFill('column');
-        // background-color: black;
-        // display: none;
       }
     }
   }
@@ -105,7 +100,6 @@
       justify-content: center;
       align-items: center;
       width: 30%;
-      background-color: aqua;
 
       .desktop-quote {
         position: relative;
