@@ -75,7 +75,6 @@
 
   .desktop-content-left {
     display: none;
-    background-color: yellow;
 
     @media screen and (min-width: $breakpoint-md) {
       @include flexFill('column');
@@ -97,7 +96,6 @@
 
   .desktop-content-right {
     display: none;
-    background-color: green;
     @media screen and (min-width: $breakpoint-md) {
       @include flexFill('column');
       justify-content: center;
