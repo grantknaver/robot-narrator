@@ -11,10 +11,10 @@ import { TOKEN_KEY } from '../shared/constants';
 
 @Injectable()
 export class AuthInterceptor implements HttpInterceptor {
-  intercept(
-    req: HttpRequest<any>,
+  intercept<T>(
+    req: HttpRequest<T>,
     next: HttpHandler
-  ): Observable<HttpEvent<any>> {
+  ): Observable<HttpEvent<T>> {
     console.log('hi from the authInterceptor');
     const token = localStorage.getItem(TOKEN_KEY);
 

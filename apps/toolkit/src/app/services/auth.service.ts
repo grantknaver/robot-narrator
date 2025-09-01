@@ -1,10 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { jwtDecode, JwtPayload } from 'jwt-decode';
 import { User } from '../models/user.interface';
-import { TOKEN_KEY } from '../shared/constants';
-
 export interface LoginRequest {
   email: string;
   password: string;
