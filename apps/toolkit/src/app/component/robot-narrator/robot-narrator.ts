@@ -13,26 +13,36 @@ import {
   output,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { HttpClient } from '@angular/common/http';
 import { gsap } from 'gsap';
-import { map, Observable, of, shareReplay, take, tap } from 'rxjs';
+import { Observable, of, shareReplay, take, tap } from 'rxjs';
 import { SelectModule } from 'primeng/select';
 import { FormsModule } from '@angular/forms';
 import { DividerModule } from 'primeng/divider';
+import * as Tone from 'tone';
 
 type SimpleConfig = {
+  // GSAP eye sweep only
   fps: number;
+  // Bar scaling
   minScale: number;
   maxScale: number;
   gain: number;
+  // Small timing nudge if needed (positive = bars ahead)
+  offset?: number;
+  // Silence gate for tiny noise
+  silenceGate?: number; // 0..1
 };
 
 const DEFAULTS: SimpleConfig = {
   fps: 18,
-  minScale: 0.25,
+  minScale: 0.15,
   maxScale: 2.2,
   gain: 1.5,
+  offset: 0,
+  silenceGate: 0.05,
 };
+
+const ENVELOPE_HZ = 120; // dynamic envelope resolution (samples/sec)
 
 interface Character {
   name: string;
@@ -53,36 +63,47 @@ export class RobotNarratorComponent
   @Input() config: Partial<SimpleConfig> = { ...DEFAULTS };
   readonly startAudio = output<boolean>();
 
-  private _head = 0;
+  // ----- state -----
   private _cfg!: SimpleConfig;
   private _barSetters: Array<(v: number) => void> = [];
+  private _rafId: number | null = null;
 
+  // Dynamic envelope derived from decoded audio
+  private env: number[] = []; // normalized 0..1
+  private envHz = ENVELOPE_HZ; // envelope frames per second
+  private duration = 0; // seconds
+
+  // Eyes + bars refs
   eyeEls = viewChildren<ElementRef<SVGGraphicsElement>>('eyeEl');
-  eyes: ElementRef<SVGGraphicsElement>[] = [];
   barEls = viewChildren<ElementRef<SVGGraphicsElement>>('barEl');
-  bars: ElementRef<SVGGraphicsElement>[] = [];
-  amplitudes: number[] = [];
-  amplitudes$: Observable<number[]> = of([]);
-  engineIgnition$: Observable<unknown> = new Observable();
-  audioElement = viewChild<ElementRef>('audioElement');
+
+  // Eye timeline: created paused; we won’t pause it in startEngine
   tl: gsap.core.Timeline = gsap.timeline({ repeat: -1, paused: true });
+
   isPlaying = false;
+
   characters: Character[] = [];
   selectedCharacter: Character = {
     name: 'Austin',
     url: '../../../assets/austin_texas_clean.mp3',
   };
 
-  constructor(
-    private ngZone: NgZone,
-    private http: HttpClient,
-    private cdr: ChangeDetectorRef
-  ) {}
+  // Tone
+  player!: Tone.Player;
 
+  // Playback clock bookkeeping (no Transport; use Tone.now())
+  private startedAt = 0; // Tone.now() at last play
+  private offsetSec = 0; // accumulated pause/seek offset
+
+  // To keep your engineIgnition$ flow (DOM ready → build engine)
+  amplitudes$: Observable<number[]> = of([]);
+  engineIgnition$: Observable<unknown> = new Observable();
+
+  constructor(private ngZone: NgZone, private cdr: ChangeDetectorRef) {}
+
+  // ---------- lifecycle ----------
   ngOnInit(): void {
-    console.log('Cleaned audio');
     this._cfg = { ...DEFAULTS, ...this.config };
-    this.getAmplitudes();
     this.characters = [
       { name: 'Austin', url: '../../../assets/austin_texas_clean.mp3' },
       {
@@ -90,77 +111,58 @@ export class RobotNarratorComponent
         url: '../../../assets/grandpa_spuds_oxley_clean.mp3',
       },
     ];
+    // Emit once so engineIgnition$ can fire after view init
+    this.amplitudes$ = of([]).pipe(take(1), shareReplay(1));
   }
 
   ngAfterViewInit(): void {
-    this.bars = Array.from(this.barEls()).sort((a, b) => {
-      const first = a.nativeElement.getBBox().x;
-      const second = b.nativeElement.getBBox().x;
-      return first - second;
+    // Sort bars left->right, prep setters
+    const barsSorted = Array.from(this.barEls()).sort((a, b) => {
+      const ax = a.nativeElement.getBBox().x;
+      const bx = b.nativeElement.getBBox().x;
+      return ax - bx;
     });
+    this._barSetters = barsSorted.map(
+      (ref) =>
+        gsap.quickSetter(ref.nativeElement, 'scaleY') as (v: number) => void
+    );
+
+    // Build engine once amplitudes$ emits (we don’t actually need it; this matches your prior wiring)
     this.engineIgnition$ = this.amplitudes$.pipe(
       take(1),
       tap(() => this.startEngine())
     );
   }
 
-  getAmplitudes() {
-    this.amplitudes$ = this.http.get<number[]>('assets/envelope.json').pipe(
-      map((amps) => this.normalize(amps)),
-      tap((amps) => {
-        this.amplitudes = amps;
-        this.cdr.detectChanges();
-      }),
-      take(1),
-      shareReplay(1)
-    );
+  ngOnDestroy(): void {
+    if (this._rafId) {
+      cancelAnimationFrame(this._rafId);
+      this._rafId = null;
+    }
+    try {
+      this.player?.dispose();
+    } catch (err) {
+      console.log('ngOnDestroy err', err);
+    }
+    this.tl?.kill();
   }
 
+  // ---------- engine (build-only; leaves everything paused) ----------
   private startEngine() {
-    const eyeEls = this.eyeEls().map((ref) => ref.nativeElement);
-    const barEls = this.bars.map((ref) => ref.nativeElement);
-    this._barSetters = barEls.map(
-      (el) => gsap.quickSetter(el, 'scaleY') as (v: number) => void
-    );
-    const barsLength = barEls.length;
-    const half = Math.floor(barsLength / 2);
-    const ampsLength = this.amplitudes.length;
-    const { minScale, maxScale, gain, fps } = this._cfg;
-    const scaleBarSample = (s: number) =>
-      minScale + this.normalize(s * gain) * (maxScale - minScale);
-    this._head = 0;
-
-    const applyFrame = () => {
-      for (let i = 0; i < half; i++) {
-        const sample = this.amplitudes[(this._head + i) % ampsLength];
-
-        const b = sample <= 0.05 ? minScale : scaleBarSample(sample);
-        this._barSetters[i](b);
-        this._barSetters[barsLength - 1 - i](b);
-      }
-      if (barsLength % 2 === 1) {
-        const sample = this.amplitudes[(this._head + half) % ampsLength];
-        const b = sample <= 0.05 ? minScale : sample;
-        this._barSetters[half](b);
-      }
-      this._head = (this._head + 1) % ampsLength;
-    };
+    console.log('startEngine');
+    const eyeEls = this.eyeEls().map((r) => r.nativeElement);
+    const barEls = this.barEls().map((r) => r.nativeElement);
+    const { minScale } = this._cfg;
 
     this.ngZone.runOutsideAngular(() => {
-      // Init transforms
+      // Bars initial transform
       gsap.set(barEls, { transformOrigin: 'center center', scaleY: minScale });
-      gsap.set(eyeEls, { transformOrigin: 'center center', x: 0 });
 
-      // Eye sweep params
-      const dx = 15;
-
-      const frameDuration = 1 / Math.max(1, fps || 33);
-
+      // Eyes: compose tweens on an already-paused timeline; DO NOT .pause() here
       this.tl.clear();
-
-      // Eyes together (look left/right in sync)
+      const dx = 15;
       if (eyeEls.length) {
-        gsap.set(eyeEls, { x: -dx }); // start at left
+        gsap.set(eyeEls, { transformOrigin: 'center center', x: -dx });
         this.tl.to(
           eyeEls,
           {
@@ -170,84 +172,174 @@ export class RobotNarratorComponent
             yoyo: true,
             repeat: -1,
           },
-          0 // start at time 0 so it runs alongside the mouth
+          0
         );
       }
-      // Mouth ticker (per-frame)
-      this.tl
-        .to(
-          {},
-          {
-            duration: frameDuration,
-            repeat: -1,
-            onRepeat: applyFrame,
-          },
-          0
-        )
-        .pause();
     });
+
+    // Prepare the audio player after visuals are ready
+    this.setupTonePlayer(this.selectedCharacter.url);
   }
 
-  playWave() {
-    this.tl?.play();
+  private setupTonePlayer(url: string) {
+    if (this.player) {
+      try {
+        this.player.dispose();
+      } catch (err) {
+        console.log('setupTonePlayer err', err);
+      }
+    }
+
+    this.player = new Tone.Player({
+      url,
+      autostart: false,
+      onload: () => {
+        // Build dynamic envelope from the actual decoded buffer
+        const buf = this.player.buffer?.get() as AudioBuffer | undefined;
+        if (!buf) return;
+
+        this.duration = buf.duration;
+        this.env = this.buildRmsEnvelope(buf, this.envHz);
+        this.cdr.markForCheck();
+      },
+    }).toDestination();
+  }
+
+  // ---------- envelope builder ----------
+  private buildRmsEnvelope(buffer: AudioBuffer, envHz: number): number[] {
+    const sr = buffer.sampleRate; // e.g. 44100
+    const hop = Math.max(1, Math.floor(sr / envHz)); // samples per envelope frame
+    const win = hop; // window size ~ hop
+
+    // Mixdown to mono
+    const chs = Array.from({ length: buffer.numberOfChannels }, (_, i) =>
+      buffer.getChannelData(i)
+    );
+    const N = buffer.length;
+    const outLen = Math.ceil(N / hop);
+    const env = new Array<number>(outLen);
+
+    let maxRms = 1e-6;
+    for (let i = 0, frame = 0; i < N; i += hop, frame++) {
+      const start = i;
+      const end = Math.min(i + win, N);
+      const n = end - start;
+      let sumSq = 0;
+
+      for (let s = start; s < end; s++) {
+        let v = 0;
+        for (let c = 0; c < chs.length; c++) v += chs[c][s];
+        v /= chs.length;
+        sumSq += v * v;
+      }
+
+      const rms = Math.sqrt(sumSq / Math.max(1, n));
+      env[frame] = rms;
+      if (rms > maxRms) maxRms = rms;
+    }
+
+    // Normalize to 0..1
+    if (maxRms > 0) for (let k = 0; k < env.length; k++) env[k] /= maxRms;
+    return env;
+  }
+
+  // ---------- render loop (bars driven by audio clock) ----------
+  private renderFrame = () => {
+    const t =
+      Tone.now() - this.startedAt + this.offsetSec + (this._cfg.offset ?? 0);
+
+    if (this.duration && t >= this.duration) {
+      this.applyBarsAtTime(this.duration);
+      this.pauseAudio(); // stop audio + rAF; eyes paused by pauseAudio
+      return;
+    }
+
+    this.applyBarsAtTime(t);
+    this._rafId = requestAnimationFrame(this.renderFrame);
+  };
+
+  private applyBarsAtTime(tSec: number) {
+    const { minScale, maxScale, gain, silenceGate = 0.05 } = this._cfg;
+    const setters = this._barSetters;
+    const n = setters.length;
+    const half = Math.floor(n / 2);
+
+    for (let i = 0; i < n; i++) {
+      const s = this.sampleEnv(tSec + (i - half) / this.envHz);
+      const scaled =
+        s <= silenceGate
+          ? minScale
+          : minScale + this.clamp01(s * gain) * (maxScale - minScale);
+      setters[i](scaled);
+    }
+  }
+
+  private sampleEnv(tSec: number): number {
+    const env = this.env;
+    const N = env.length;
+    if (N === 0 || this.envHz <= 0) return 0;
+
+    if (tSec <= 0) return env[0];
+    const idx = tSec * this.envHz;
+    if (idx >= N - 1) return env[N - 1];
+
+    const i0 = Math.floor(idx);
+    const frac = idx - i0;
+    const a = env[i0];
+    const b = env[i0 + 1];
+    return a + (b - a) * frac;
+  }
+
+  // ---------- controls ----------
+  async playAudio() {
+    await Tone.start();
+    if (this.isPlaying) return;
+    if (!this.duration || !this.env.length) return; // wait for onload/env
+
+    this.tl?.play(); // eyes start here (timeline was constructed paused)
+
+    this.startedAt = Tone.now();
+    this.player.start(this.startedAt, this.offsetSec);
+
+    if (!this._rafId) this._rafId = requestAnimationFrame(this.renderFrame);
+
     this.startAudio.emit(true);
-  }
-  pauseWave() {
-    this.tl?.pause();
-  }
-  restartWave() {
-    if (!this.tl) return;
-    this._head = 0;
-
-    this.tl.pause();
-    const v = this._cfg.minScale;
-    this.isPlaying = false;
-    for (const set of this._barSetters) set(v);
-  }
-
-  ngOnDestroy(): void {
-    this.tl?.kill();
-  }
-
-  trackByIndex(index: number) {
-    return index;
-  }
-
-  normalize(v: number): number;
-  normalize(arr: number[]): number[];
-  normalize(data: number | number[]): number | number[] {
-    const clamp01 = (x: number) => (x < 0 ? 0 : x > 1 ? 1 : x);
-
-    if (!Array.isArray(data)) {
-      return clamp01(data);
-    }
-
-    if (!data.length) return data;
-
-    let min = Infinity,
-      max = -Infinity;
-    for (const v of data) {
-      if (v < min) min = v;
-      if (v > max) max = v;
-    }
-    if (max <= min) return data.map(() => 0);
-
-    const range = max - min;
-    return data.map((v) => (v - min) / range);
-  }
-
-  playAudio() {
-    const audioEl = this.audioElement()?.nativeElement;
-    audioEl.play();
-    this.playWave();
     this.isPlaying = true;
   }
 
   pauseAudio() {
-    const audioEl = this.audioElement()?.nativeElement;
-    audioEl.currentTime = 0;
-    audioEl.pause();
-    this.restartWave();
+    if (!this.isPlaying) return;
+
+    this.offsetSec += Tone.now() - this.startedAt;
+    this.player.stop();
+
+    if (this._rafId) {
+      cancelAnimationFrame(this._rafId);
+      this._rafId = null;
+    }
+    this.tl?.pause(); // stop eyes with audio
+
     this.isPlaying = false;
+  }
+
+  // optional: restart to t=0
+  restartWave() {
+    this.pauseAudio();
+    this.offsetSec = 0;
+    const v = this._cfg.minScale;
+    for (const set of this._barSetters) set(v);
+    this.tl?.pause(0);
+  }
+
+  async selectCharacter(c: Character) {
+    this.pauseAudio();
+    this.restartWave();
+    this.selectedCharacter = c;
+    this.setupTonePlayer(c.url); // will rebuild envelope on load
+  }
+
+  // ---------- helpers ----------
+  private clamp01(x: number) {
+    return x < 0 ? 0 : x > 1 ? 1 : x;
   }
 }
