@@ -7,7 +7,6 @@ import {
   NgZone,
   OnInit,
   ChangeDetectorRef,
-  viewChild,
   viewChildren,
   Input,
   output,
@@ -21,8 +20,8 @@ import { DividerModule } from 'primeng/divider';
 import * as Tone from 'tone';
 
 type SimpleConfig = {
-  // GSAP eye sweep only
-  fps: number;
+  // Originally for GSAP eye sweep only
+  // fps: number;
   // Bar scaling
   minScale: number;
   maxScale: number;
@@ -34,7 +33,7 @@ type SimpleConfig = {
 };
 
 const DEFAULTS: SimpleConfig = {
-  fps: 18,
+  // fps: 18,
   minScale: 0.15,
   maxScale: 2.2,
   gain: 1.5,
@@ -72,16 +71,15 @@ export class RobotNarratorComponent
   private env: number[] = []; // normalized 0..1
   private envHz = ENVELOPE_HZ; // envelope frames per second
   private duration = 0; // seconds
+  expectedEndAt = 0;
 
-  // Eyes + bars refs
+  // Eyes + barsrefs
   eyeEls = viewChildren<ElementRef<SVGGraphicsElement>>('eyeEl');
   barEls = viewChildren<ElementRef<SVGGraphicsElement>>('barEl');
 
   // Eye timeline: created paused; we won’t pause it in startEngine
   tl: gsap.core.Timeline = gsap.timeline({ repeat: -1, paused: true });
-
   isPlaying = false;
-
   characters: Character[] = [];
   selectedCharacter: Character = {
     name: 'Austin',
@@ -202,6 +200,16 @@ export class RobotNarratorComponent
         this.env = this.buildRmsEnvelope(buf, this.envHz);
         this.cdr.markForCheck();
       },
+      onstop: () => {
+        const EPS = 0.2; // 200 ms window
+        const naturalEnd = Math.abs(Tone.now() - this.expectedEndAt) <= EPS;
+
+        if (naturalEnd) {
+          this.restartWave(); // resets and ensures isPlaying=false
+        } else {
+          this.pauseAudio(true); // make sure everything is stopped
+        }
+      },
     }).toDestination();
   }
 
@@ -301,36 +309,55 @@ export class RobotNarratorComponent
     this.startedAt = Tone.now();
     this.player.start(this.startedAt, this.offsetSec);
 
+    const remaining = Math.max(0, this.duration - this.offsetSec);
+    this.expectedEndAt = this.startedAt + remaining;
+
     if (!this._rafId) this._rafId = requestAnimationFrame(this.renderFrame);
 
     this.startAudio.emit(true);
     this.isPlaying = true;
   }
 
-  pauseAudio() {
-    if (!this.isPlaying) return;
+  pauseAudio(force = false) {
+    // Always attempt to stop when forced, otherwise only if currently playing
+    if (!force && !this.isPlaying) return;
 
-    this.offsetSec += Tone.now() - this.startedAt;
-    this.player.stop();
+    // Stop audio (safe even if already stopped)
+    try {
+      this.player?.stop();
+    } catch {}
 
+    // Stop RAF
     if (this._rafId) {
       cancelAnimationFrame(this._rafId);
       this._rafId = null;
     }
-    this.tl?.pause(); // stop eyes with audio
 
+    // Pause eyes
+    this.tl?.pause();
+
+    // Flip flag and notify change detection (OnPush)
     this.isPlaying = false;
+    this.cdr.markForCheck();
   }
 
   // optional: restart to t=0
   restartWave() {
-    this.pauseAudio();
+    // Hard stop everything regardless of current flag
+    this.pauseAudio(true);
+
+    // Reset clock and visuals
     this.offsetSec = 0;
+    this.expectedEndAt = 0;
+
     const v = this._cfg.minScale;
     for (const set of this._barSetters) set(v);
-    this.tl?.pause(0);
-  }
 
+    this.tl?.pause(0);
+
+    // Ensure UI updates under OnPush
+    this.cdr.markForCheck();
+  }
   async selectCharacter(c: Character) {
     this.pauseAudio();
     this.restartWave();
