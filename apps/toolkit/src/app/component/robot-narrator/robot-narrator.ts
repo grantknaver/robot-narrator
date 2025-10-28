@@ -96,6 +96,7 @@ export class RobotNarratorComponent
   // To keep your engineIgnition$ flow (DOM ready → build engine)
   amplitudes$: Observable<number[]> = of([]);
   engineIgnition$: Observable<unknown> = new Observable();
+  private _switching = false; // guards onstop during character change
 
   constructor(private ngZone: NgZone, private cdr: ChangeDetectorRef) {}
 
@@ -179,38 +180,54 @@ export class RobotNarratorComponent
     this.setupTonePlayer(this.selectedCharacter.url);
   }
 
-  private setupTonePlayer(url: string) {
-    if (this.player) {
-      try {
-        this.player.dispose();
-      } catch (err) {
-        console.log('setupTonePlayer err', err);
-      }
-    }
-
-    this.player = new Tone.Player({
-      url,
-      autostart: false,
-      onload: () => {
-        // Build dynamic envelope from the actual decoded buffer
-        const buf = this.player.buffer?.get() as AudioBuffer | undefined;
-        if (!buf) return;
-
-        this.duration = buf.duration;
-        this.env = this.buildRmsEnvelope(buf, this.envHz);
-        this.cdr.markForCheck();
-      },
-      onstop: () => {
-        const EPS = 0.2; // 200 ms window
-        const naturalEnd = Math.abs(Tone.now() - this.expectedEndAt) <= EPS;
-
-        if (naturalEnd) {
-          this.restartWave(); // resets and ensures isPlaying=false
-        } else {
-          this.pauseAudio(true); // make sure everything is stopped
+  private setupTonePlayer(url: string): Promise<void> {
+    return new Promise<void>((resolve, reject) => {
+      // Dispose any previous player
+      if (this.player) {
+        try {
+          this.player.dispose();
+        } catch (err) {
+          console.log('player', err);
         }
-      },
-    }).toDestination();
+        this.player = undefined as any;
+      }
+
+      // Reset decoded state for the new file
+      this.duration = 0;
+      this.env = [];
+
+      const player = new Tone.Player({
+        url,
+        autostart: false,
+        onload: () => {
+          try {
+            const buf = player.buffer?.get() as AudioBuffer | undefined;
+            if (!buf) throw new Error('No AudioBuffer after load');
+
+            this.duration = buf.duration;
+            this.env = this.buildRmsEnvelope(buf, this.envHz);
+
+            this.player = player; // set only after success
+            this.cdr.markForCheck();
+            resolve();
+          } catch (e) {
+            reject(e);
+          }
+        },
+        onstop: () => {
+          // Ignore onstop noise while swapping
+          if (this._switching) return;
+
+          const EPS = 0.2; // 200ms
+          const naturalEnd = Math.abs(Tone.now() - this.expectedEndAt) <= EPS;
+          if (naturalEnd) {
+            this.restartWave();
+          } else {
+            this.pauseAudio(true);
+          }
+        },
+      }).toDestination();
+    });
   }
 
   // ---------- envelope builder ----------
@@ -302,9 +319,9 @@ export class RobotNarratorComponent
   async playAudio() {
     await Tone.start();
     if (this.isPlaying) return;
-    if (!this.duration || !this.env.length) return; // wait for onload/env
+    if (!this.player || !this.duration || !this.env.length) return; // not ready yet
 
-    this.tl?.play(); // eyes start here (timeline was constructed paused)
+    this.tl?.play();
 
     this.startedAt = Tone.now();
     this.player.start(this.startedAt, this.offsetSec);
@@ -316,27 +333,21 @@ export class RobotNarratorComponent
 
     this.startAudio.emit(true);
     this.isPlaying = true;
+    this.cdr.markForCheck();
   }
 
   pauseAudio(force = false) {
-    // Always attempt to stop when forced, otherwise only if currently playing
     if (!force && !this.isPlaying) return;
-
-    // Stop audio (safe even if already stopped)
     try {
       this.player?.stop();
-    } catch {}
-
-    // Stop RAF
+    } catch (err) {
+      console.log('pauseAudio', err);
+    }
     if (this._rafId) {
       cancelAnimationFrame(this._rafId);
       this._rafId = null;
     }
-
-    // Pause eyes
     this.tl?.pause();
-
-    // Flip flag and notify change detection (OnPush)
     this.isPlaying = false;
     this.cdr.markForCheck();
   }
@@ -358,11 +369,26 @@ export class RobotNarratorComponent
     // Ensure UI updates under OnPush
     this.cdr.markForCheck();
   }
-  async selectCharacter(c: Character) {
-    this.pauseAudio();
-    this.restartWave();
-    this.selectedCharacter = c;
-    this.setupTonePlayer(c.url); // will rebuild envelope on load
+
+  async selectCharacter() {
+    this.restartWave(); // sets offsetSec = 0, resets bars/eyes
+
+    // Commit selection (so UI reflects it immediately)
+    this.cdr.markForCheck();
+
+    // Load new player + build new envelope
+    this._switching = true;
+    try {
+      await this.setupTonePlayer(this.selectedCharacter.url);
+    } finally {
+      this._switching = false;
+    }
+
+    // If we were playing before, resume automatically from t=0
+    if (this.isPlaying) {
+      this.offsetSec = 0;
+      await this.playAudio();
+    }
   }
 
   // ---------- helpers ----------

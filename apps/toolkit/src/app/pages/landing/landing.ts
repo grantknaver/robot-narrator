@@ -45,4 +45,5 @@ import { AccordionModule } from 'primeng/accordion';
 })
 export class LandingComponent {
   showScript = false;
+  isNarrationPlaying = false;
 }
