@@ -70,7 +70,7 @@ export class RobotNarratorComponent
   characters: Character[] = [];
   selectedCharacter: Character = {
     name: 'Austin',
-    url: '../../../assets/austin-texas.mp3',
+    url: '../../../assets/austin_texas_clean.mp3',
   };
 
   constructor(
@@ -80,11 +80,15 @@ export class RobotNarratorComponent
   ) {}
 
   ngOnInit(): void {
+    console.log('Cleaned audio');
     this._cfg = { ...DEFAULTS, ...this.config };
     this.getAmplitudes();
     this.characters = [
-      { name: 'Austin', url: '../../../assets/austin-texas.mp3' },
-      { name: 'Grandpa Spuds', url: '../../../assets/grandpa-spuds-oxley.mp3' },
+      { name: 'Austin', url: '../../../assets/austin_texas_clean.mp3' },
+      {
+        name: 'Grandpa Spuds',
+        url: '../../../assets/grandpa_spuds_oxley_clean.mp3',
+      },
     ];
   }
 
@@ -98,11 +102,6 @@ export class RobotNarratorComponent
       take(1),
       tap(() => this.startEngine())
     );
-  }
-
-  test() {
-    console.log('changed');
-    alert('TESET');
   }
 
   getAmplitudes() {
