@@ -238,7 +238,7 @@ export class RobotNarratorComponent
             // Smoothly return the book, then reset visuals/state
             if (this.bookTween) {
               this.bookTween
-                .timeScale(2) // 4× faster reverse (adjust to taste)
+                .timeScale(4) // 4× faster reverse (adjust to taste)
                 .reverse();
 
               this.bookTween.eventCallback('onReverseComplete', () => {
