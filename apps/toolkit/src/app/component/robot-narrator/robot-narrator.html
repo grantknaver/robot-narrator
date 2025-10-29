@@ -243,19 +243,21 @@
     (ended)="pauseAudio()"
   ></audio>
   <button
-    class="mobile-button"
+    *ngIf="isResponsive; else desktopBtn"
+    class="mobile-btn"
     (click)="isPlaying ? pauseAudio() : playAudio() "
   >
     {{isPlaying ? 'Stop' : 'Play'}}
   </button>
-  <button
-    class="desktop-button"
-    (click)="isPlaying ? pauseAudio() : playAudio() "
-  >
-    <i
-      [ngClass]="{'fas fa fa-stop' : isPlaying, 'fas fa-play' : !isPlaying }"
-      class="mobile-icon"
+  <ng-template #desktopBtn>
+    <button
+      #desktopActionBtn
+      class="desktop-btn"
+      (click)="isPlaying ? pauseAudio() : playAudio() "
     >
-    </i>
-  </button>
+      {{isPlaying ? 'Stop' : 'Play'}}
+    </button>
+  </ng-template>
+  <hr style="width: 100px" />
+  <button class="desktop-btn" (click)="restartNarration()">Restart</button>
 </div>

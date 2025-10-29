@@ -15,7 +15,11 @@
     width: 70%;
     max-width: 100%;
     padding: 0.5rem;
-    max-width: 325px;
+    max-width: 300px;
+
+    @media screen and (min-width: $breakpoint-md) {
+      max-width: 350px;
+    }
   }
 
   .svg-wrapper {
@@ -25,6 +29,16 @@
     @media screen and (min-width: $breakpoint-sm) {
       min-width: 450px; // size be set for svg scalling
       max-width: 450px; // size be set for svg scalling
+    }
+
+    @media screen and (min-width: $breakpoint-md) {
+      min-width: 650px; // size be set for svg scalling
+      max-width: 650px; // size be set for svg scalling
+    }
+
+    @media screen and (min-width: $breakpoint-xl) {
+      min-width: 850px; // size be set for svg scalling
+      max-width: 850px; // size be set for svg scalling
     }
 
     svg {
@@ -42,48 +56,41 @@
     height: 1px;
   }
 
-  .mobile-button {
+  .mobile-btn {
     width: 60%;
     max-width: 400px;
     margin: 1rem;
     padding: 0.8rem;
-
     background-color: $dark;
     color: $primary;
-    font-size: $text-2;
     border-radius: 5px;
-
-    @media screen and (min-width: $breakpoint-sm) {
-      display: none;
-    }
+    font-size: 1.5rem;
   }
 
-  .mobile-button:active {
+  .mobile-btn:active {
+    color: $primary !important;
+  }
+
+  .mobile-btn:hover {
+    box-shadow: 2px 2px 5px $accent, -2px -2px 5px $accent, 2px -2px 5px $accent,
+      -2px 2px 5px $accent;
     color: $accent;
   }
 
-  .desktop-button {
-    display: none;
-    margin: 1rem 0 1.5rem 0;
-    padding: 0.5rem 0.8rem;
-    background-color: $dark;
-    color: $accent;
-    border-radius: 100px;
-    font-size: $text-2;
-
-    @media screen and (min-width: $breakpoint-sm) {
-      display: initial;
-    }
-
-    .mobile-icon {
-      color: $primary;
-    }
+  .desktop-btn {
+    font-size: 1.5rem;
+    background-color: transparent;
+    border: none;
+    cursor: pointer;
+    transform: scale(1);
+    transition: transform 0.75s ease;
   }
 
-  .desktop-button:active {
-    border: solid $accent 2px;
-    opacity: 0;
-    transition: opacity 1s ease-in; /* Fade in over 1 second */
+  .desktop-btn:hover {
+    transform: scale(1.25);
+    color: $accent;
+    text-shadow: 0 1px 0 $dark, 1px 0 0 $dark, 0 -1px 0 $dark, -1px 0 0 $dark,
+      1px 1px 0 $dark, -1px 1px 0 $dark, 1px -1px 0 $dark, -1px -1px 0 $dark;
   }
 }
 

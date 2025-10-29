@@ -16,28 +16,3 @@ app-root {
 }
 
 /* or, a bit more specific to your layout */
-app-root .route-slot > router-outlet + * {
-  @include flexFill('column');
-}
-
-// ----------Primeng Overrides----------
-
-.play-button .p-button-icon,
-.p-button-icon:before,
-.p-button-icon:after {
-  font-size: 5rem;
-}
-
-.feature-accordion .p-accordionheader {
-  padding-bottom: 0 !important;
-}
-
-.character-selector .p-select-option.p-select-option-selected.p-focus {
-  background: $dark !important;
-  color: $primary !important;
-}
-
-.character-selector .p-select-option.p-select-option-selected {
-  background: $dark !important;
-  color: $primary !important;
-}

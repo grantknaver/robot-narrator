@@ -11,10 +11,25 @@ import {
   Input,
   output,
   viewChild,
+  computed,
+  signal,
+  HostListener,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { gsap } from 'gsap';
-import { Observable, of, shareReplay, take, tap } from 'rxjs';
+import {
+  auditTime,
+  distinctUntilChanged,
+  fromEvent,
+  map,
+  Observable,
+  of,
+  shareReplay,
+  startWith,
+  Subscription,
+  take,
+  tap,
+} from 'rxjs';
 import { SelectModule } from 'primeng/select';
 import { FormsModule } from '@angular/forms';
 import { DividerModule } from 'primeng/divider';
@@ -62,6 +77,10 @@ export class RobotNarratorComponent
 {
   @Input() config: Partial<SimpleConfig> = { ...DEFAULTS };
   readonly startAudio = output<boolean>();
+  @HostListener('window:resize')
+  onResize() {
+    this.widthPx.set(this.getViewportWidth());
+  }
 
   // ----- state -----
   private _cfg!: SimpleConfig;
@@ -74,11 +93,23 @@ export class RobotNarratorComponent
   private duration = 0; // seconds
   expectedEndAt = 0;
   private bookTween: gsap.core.Tween | null = null;
+  getViewportWidth = () =>
+    Math.max(document.documentElement.clientWidth, window.innerWidth || 0);
+  smBreakpoint = 600;
+  widthPx = signal(this.getViewportWidth());
+
+  // --- Singleton state ---
+
+  get isResponsive(): boolean {
+    return this.widthPx() < this.smBreakpoint;
+  }
 
   // Eyes + barsrefs
   eyeEls = viewChildren<ElementRef<SVGGraphicsElement>>('eyeEl');
   barEls = viewChildren<ElementRef<SVGGraphicsElement>>('barEl');
-  bookEl = viewChild<ElementRef<SVGGraphicsElement>>('bookEl'); // NEW
+  bookEl = viewChild<ElementRef<SVGGraphicsElement>>('bookEl');
+  desktopActionBtnEl =
+    viewChild<ElementRef<SVGGraphicsElement>>('desktopActionBtn');
 
   // Eye timeline: created paused; we won’t pause it in startEngine
   tl: gsap.core.Timeline = gsap.timeline({ repeat: -1, paused: true });
@@ -88,9 +119,11 @@ export class RobotNarratorComponent
     name: 'Austin',
     url: '../../../assets/austin-texas.mp3',
   };
-
+  private resizeSub?: Subscription;
   // Tone
   player!: Tone.Player;
+  vw = () =>
+    Math.max(document.documentElement.clientWidth, window.innerWidth || 0);
 
   // Playback clock bookkeeping (no Transport; use Tone.now())
   private startedAt = 0; // Tone.now() at last play
@@ -118,7 +151,6 @@ export class RobotNarratorComponent
   }
 
   ngAfterViewInit(): void {
-    // Sort bars left->right, prep setters
     const barsSorted = Array.from(this.barEls()).sort((a, b) => {
       const ax = a.nativeElement.getBBox().x;
       const bx = b.nativeElement.getBBox().x;
@@ -128,6 +160,14 @@ export class RobotNarratorComponent
       (ref) =>
         gsap.quickSetter(ref.nativeElement, 'scaleY') as (v: number) => void
     );
+    this.resizeSub = fromEvent(window, 'resize')
+      .pipe(
+        auditTime(50),
+        map(() => this.getViewportWidth()),
+        startWith(this.getViewportWidth()),
+        distinctUntilChanged()
+      )
+      .subscribe((w) => this.widthPx.set(w));
 
     // Build engine once amplitudes$ emits (we don’t actually need it; this matches your prior wiring)
     this.engineIgnition$ = this.amplitudes$.pipe(
@@ -137,6 +177,7 @@ export class RobotNarratorComponent
   }
 
   ngOnDestroy(): void {
+    this.resizeSub?.unsubscribe();
     if (this._rafId) {
       cancelAnimationFrame(this._rafId);
       this._rafId = null;
@@ -149,9 +190,21 @@ export class RobotNarratorComponent
     this.tl?.kill();
   }
 
+  restartNarration() {
+    if (!this.bookTween) return;
+    this.bookTween
+      ?.timeScale(4) // 4× faster reverse (adjust to taste)
+      .reverse();
+
+    this.bookTween?.eventCallback('onReverseComplete', () => {
+      // Reset to normal speed for the next play
+      this.bookTween?.timeScale(1);
+      this.restartWave(); // ensures bars, eyes, etc. reset cleanly
+    });
+  }
+
   // ---------- engine (build-only; leaves everything paused) ----------
   private startEngine() {
-    console.log('startEngine');
     const eyeEls = this.eyeEls().map((r) => r.nativeElement);
     const barEls = this.barEls().map((r) => r.nativeElement);
     const { minScale } = this._cfg;
@@ -439,4 +492,19 @@ export class RobotNarratorComponent
   private clamp01(x: number) {
     return x < 0 ? 0 : x > 1 ? 1 : x;
   }
+
+  desktopAction() {
+    gsap.set(this.desktopActionBtnEl, {
+      scale: 1,
+      rotation: 0,
+    });
+    if (this.isPlaying) {
+      this.pauseAudio();
+    } else {
+      this.playAudio();
+    }
+  }
+}
+function ref(arg0: number) {
+  throw new Error('Function not implemented.');
 }
