@@ -10,6 +10,7 @@ import {
   viewChildren,
   Input,
   output,
+  viewChild,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { gsap } from 'gsap';
@@ -72,10 +73,12 @@ export class RobotNarratorComponent
   private envHz = ENVELOPE_HZ; // envelope frames per second
   private duration = 0; // seconds
   expectedEndAt = 0;
+  private bookTween: gsap.core.Tween | null = null;
 
   // Eyes + barsrefs
   eyeEls = viewChildren<ElementRef<SVGGraphicsElement>>('eyeEl');
   barEls = viewChildren<ElementRef<SVGGraphicsElement>>('barEl');
+  bookEl = viewChild<ElementRef<SVGGraphicsElement>>('bookEl'); // NEW
 
   // Eye timeline: created paused; we won’t pause it in startEngine
   tl: gsap.core.Timeline = gsap.timeline({ repeat: -1, paused: true });
@@ -83,7 +86,7 @@ export class RobotNarratorComponent
   characters: Character[] = [];
   selectedCharacter: Character = {
     name: 'Austin',
-    url: '../../../assets/austin_texas_clean.mp3',
+    url: '../../../assets/austin-texas.mp3',
   };
 
   // Tone
@@ -104,10 +107,10 @@ export class RobotNarratorComponent
   ngOnInit(): void {
     this._cfg = { ...DEFAULTS, ...this.config };
     this.characters = [
-      { name: 'Austin', url: '../../../assets/austin_texas_clean.mp3' },
+      { name: 'Austin', url: '../../../assets/austin-texas.mp3' },
       {
         name: 'Grandpa Spuds',
-        url: '../../../assets/grandpa_spuds_oxley_clean.mp3',
+        url: '../../../assets/grandpa-spuds-oxley.mp3',
       },
     ];
     // Emit once so engineIgnition$ can fire after view init
@@ -174,6 +177,17 @@ export class RobotNarratorComponent
           0
         );
       }
+
+      const book = this.bookEl()?.nativeElement;
+      if (book) {
+        gsap.set(book, { y: 0, transformOrigin: 'center center' });
+        this.bookTween = gsap.to(book, {
+          y: -100,
+          duration: 0.5,
+          ease: 'power1.out',
+          paused: true,
+        });
+      }
     });
 
     // Prepare the audio player after visuals are ready
@@ -215,16 +229,43 @@ export class RobotNarratorComponent
           }
         },
         onstop: () => {
-          // Ignore onstop noise while swapping
           if (this._switching) return;
 
           const EPS = 0.2; // 200ms
           const naturalEnd = Math.abs(Tone.now() - this.expectedEndAt) <= EPS;
+
           if (naturalEnd) {
-            this.restartWave();
-          } else {
-            this.pauseAudio(true);
+            // Smoothly return the book, then reset visuals/state
+            if (this.bookTween) {
+              this.bookTween
+                .timeScale(2) // 4× faster reverse (adjust to taste)
+                .reverse();
+
+              this.bookTween.eventCallback('onReverseComplete', () => {
+                // Reset to normal speed for the next play
+                this.bookTween!.timeScale(1);
+                this.restartWave(); // ensures bars, eyes, etc. reset cleanly
+              });
+            } else {
+              // Fallback if tween didn't exist for some reason
+              const book = this.bookEl()?.nativeElement;
+              if (book) {
+                alert('end');
+                gsap.to(book, {
+                  y: 0,
+                  duration: 0.3,
+                  ease: 'power2.out',
+                  onComplete: () => this.restartWave(),
+                });
+              } else {
+                this.restartWave();
+              }
+            }
+            return;
           }
+
+          // manual stop/pause
+          this.pauseAudio(true);
         },
       }).toDestination();
     });
@@ -322,6 +363,7 @@ export class RobotNarratorComponent
     if (!this.player || !this.duration || !this.env.length) return; // not ready yet
 
     this.tl?.play();
+    this.bookTween?.play(); // NEW
 
     this.startedAt = Tone.now();
     this.player.start(this.startedAt, this.offsetSec);
@@ -348,6 +390,7 @@ export class RobotNarratorComponent
       this._rafId = null;
     }
     this.tl?.pause();
+    this.bookTween?.reverse(); // NEW (go back up)
     this.isPlaying = false;
     this.cdr.markForCheck();
   }
@@ -365,6 +408,7 @@ export class RobotNarratorComponent
     for (const set of this._barSetters) set(v);
 
     this.tl?.pause(0);
+    this.bookTween?.pause(0);
 
     // Ensure UI updates under OnPush
     this.cdr.markForCheck();
