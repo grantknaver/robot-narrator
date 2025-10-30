@@ -1,10 +1,5 @@
-<div
-  class="container"
-  *ngIf="{
-  'amps': amplitudes$ | async,
-  'ignition': engineIgnition$ | async
-}"
->
+<div class="container">
+  @defer (on idle) {
   <p-select
     [options]="characters"
     [(ngModel)]="selectedCharacter"
@@ -13,6 +8,9 @@
     class="character-selector"
     (onChange)="selectCharacter()"
   />
+  } @placeholder {
+  <div>Voices are loading</div>
+  } @defer (on viewport; prefetch on idle) {
   <div class="svg-wrapper">
     <svg
       id="svg5"
@@ -234,7 +232,9 @@
       />
     </svg>
   </div>
-
+  } @placeholder {
+  <div class="svg-wrapper"></div>
+  } @defer (on interaction) {
   <audio
     class="audioPlayer"
     #audioElement
@@ -242,6 +242,11 @@
     [src]="selectedCharacter.url"
     (ended)="pauseAudio()"
   ></audio>
+
+  } @placeholder {
+  <span></span>
+  }
+
   <button
     *ngIf="isResponsive; else desktopBtn"
     class="mobile-btn"
