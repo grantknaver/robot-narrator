@@ -8,11 +8,10 @@
       [(ngModel)]="selectedCharacter"
       name="character"
       id="character-select"
-      (change)="selectCharacter()"
+      (change)="restartNarration()"
     >
-      <option class="test" [ngValue]="null" disabled>Choose a Voice</option>
+      <option [ngValue]="null" disabled>Choose a Voice</option>
       <option
-        class="test"
         [ngValue]="character"
         *ngFor="let character of characters; trackBy: trackById"
       >
@@ -25,7 +24,7 @@
   <div>Voices are loading</div>
   }
   <div #svgWrapper class="pic-wrapper">
-    @defer (on timer(1000)) {
+    @defer (on timer(1500)) {
     <svg
       ngSkipHydration
       id="svg5"
@@ -247,14 +246,16 @@
       />
     </svg>
     <link rel="prefetch" href="../../../assets/main-robot.svg" as="link" />
-    } @placeholder { Loading... }
+    } @placeholder {
+    <div class="lcp-ph animate-pop" aria-label="Loading">LOADING…</div>
+    }
   </div>
   @defer (on interaction) {
   <audio
     class="audioPlayer"
     controls
     preload="none"
-    [src]="selectedCharacter.url"
+    [src]="isPlaying ? selectedCharacter.url : ''"
     (ended)="pauseAudio()"
   ></audio>
 

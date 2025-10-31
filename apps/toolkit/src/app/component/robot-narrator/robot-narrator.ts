@@ -57,18 +57,10 @@ const DEFAULTS: SimpleConfig = {
   offset: 0,
   silenceGate: 0.05,
 };
-
-const ENVELOPE_HZ = 120; // dynamic envelope resolution (samples/sec)
-
 @Component({
   selector: 'app-robot-narrator',
   standalone: true,
-  imports: [
-    CommonModule,
-    // SelectModule,
-    FormsModule,
-    // DividerModule
-  ],
+  imports: [CommonModule, FormsModule],
   templateUrl: './robot-narrator.html',
   styleUrls: ['./robot-narrator.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -81,12 +73,11 @@ export class RobotNarratorComponent
   private _barSetters: Array<(v: number) => void> = [];
   private _rafId: number | null = null;
   private env: number[] = []; // normalized 0..1
-  private envHz = ENVELOPE_HZ; // envelope frames per second
   private duration = 0; // seconds
-
   private bookTween: gsap.core.Tween | null = null;
   private getViewportWidth = () =>
     Math.max(document.documentElement.clientWidth, window.innerWidth || 0);
+  private envHz = this.getViewportWidth() <= 600 ? 60 : 120; // envelope frames per second
   private smBreakpoint = 600;
   private widthPx = signal(this.getViewportWidth());
   private eyeEls = viewChildren<ElementRef<SVGGraphicsElement>>('eyeEl');
@@ -100,7 +91,6 @@ export class RobotNarratorComponent
   private startedAt = 0; // Tone.now() at last play
   private offsetSec = 0; // accumulated pause/seek offset
   private hasEngineStarted = false;
-  private _switching = false; // guards onstop during character change
   private amplitudes$ = of([]).pipe(take(1), shareReplay(1));
   private bars$ = toObservable(this.barEls).pipe(
     map((list) => list.length > 0)
@@ -244,9 +234,6 @@ export class RobotNarratorComponent
         });
       }
     });
-
-    // Prepare the audio player after visuals are ready
-    this.setupTonePlayer(this.selectedCharacter.url);
   }
 
   private async setupTonePlayer(url: string): Promise<void> {
@@ -255,47 +242,52 @@ export class RobotNarratorComponent
       try {
         this.player.dispose();
       } catch (err) {
-        console.log('setupTonePlayer err', err);
+        console.log('setupTonePlayer dispose err', err);
       }
       this.player = undefined;
     }
 
+    // Reset derived state
     this.duration = 0;
     this.env = [];
 
+    // Create the player (no onload/onstop here)
     const player = await this.toneService.createPlayer({
       url,
       autostart: false,
-      onload: () => {
-        const buf = player.buffer?.get() as AudioBuffer | undefined;
-        if (!buf) throw new Error('No AudioBuffer after load');
-
-        this.duration = buf.duration;
-        this.env = this.buildRmsEnvelope(buf, this.envHz);
-        this.player = player;
-        this.cdr.markForCheck();
-      },
-      onstop: () => {
-        if (this._switching) return;
-
-        const manual = this._manualStop;
-        this._manualStop = false;
-
-        if (!manual) {
-          this.offsetSec = this.duration;
-          this.bookTween?.timeScale(4).reverse();
-          this.bookTween?.eventCallback('onReverseComplete', () => {
-            this.bookTween?.timeScale(1);
-            this.restartWave();
-          });
-        }
-      },
     });
 
-    // await the player load if you need to ensure buffer readiness
-    // await new Promise<void>((resolve) => {
-    //   player.onload = () => resolve();
-    // });
+    // ✅ Wait until the audio is fully loaded/decoded
+    const pAny = player as any;
+    if (pAny.loaded && typeof pAny.loaded.then === 'function') {
+      await pAny.loaded; // Tone v14+
+    } else {
+      await player.load(url); // fallback if typings differ
+    }
+
+    // Buffer is now ready
+    const buf = player.buffer?.get() as AudioBuffer | undefined;
+    if (!buf) throw new Error('No AudioBuffer after load');
+
+    this.duration = buf.duration;
+    this.env = this.buildRmsEnvelope(buf, this.envHz);
+    this.player = player;
+    this.cdr.markForCheck();
+
+    // Reattach your onstop handler AFTER player exists
+    this.player.onstop = () => {
+      const manual = this._manualStop;
+      this._manualStop = false;
+
+      if (!manual) {
+        this.offsetSec = this.duration;
+        this.bookTween?.timeScale(4).reverse();
+        this.bookTween?.eventCallback('onReverseComplete', () => {
+          this.bookTween?.timeScale(1);
+          this.restartWave();
+        });
+      }
+    };
   }
 
   private buildRmsEnvelope(buffer: AudioBuffer, envHz: number): number[] {
@@ -401,7 +393,7 @@ export class RobotNarratorComponent
 
     // If player not ready yet, create it now
     if (!this.player || !this.duration || !this.env.length) {
-      await this.setupTonePlayer(this.selectedCharacter.url);
+      await this.setupTonePlayer(this.selectedCharacter.url); // fetch+decode happens here
       if (!this.player || !this.duration || !this.env.length) return;
     }
 
@@ -462,27 +454,6 @@ export class RobotNarratorComponent
     }
 
     this.cdr.markForCheck();
-  }
-
-  async selectCharacter() {
-    this.restartWave(); // sets offsetSec = 0, resets bars/eyes
-
-    // Commit selection (so UI reflects it immediately)
-    this.cdr.markForCheck();
-
-    // Load new player + build new envelope
-    this._switching = true;
-    try {
-      await this.setupTonePlayer(this.selectedCharacter.url);
-    } finally {
-      this._switching = false;
-    }
-
-    // If we were playing before, resume automatically from t=0
-    if (this.isPlaying) {
-      this.offsetSec = 0;
-      await this.playAudio();
-    }
   }
 
   // ---------- helpers ----------

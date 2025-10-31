@@ -62,27 +62,6 @@
       min-width: 850px; // size be set for svg scalling
       max-width: 850px; // size be set for svg scalling
     }
-
-    svg {
-      z-index: 2;
-      height: auto;
-      width: 100%;
-    }
-
-    img {
-      height: auto;
-      width: 100%;
-      max-width: 100px;
-
-      @media screen and (min-width: $breakpoint-sm) {
-      }
-
-      @media screen and (min-width: $breakpoint-md) {
-      }
-
-      @media screen and (min-width: $breakpoint-xl) {
-      }
-    }
   }
 
   .audioPlayer {
@@ -131,6 +110,35 @@
   }
 }
 
-.p-select-option.p-select-option-selected.p-focus {
-  display: none !important;
+.lcp-ph {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  max-width: 850px;
+  aspect-ratio: 850/561;
+  opacity: 0;
+  transform: scale(0.9);
+  animation: fadePop 0.2s cubic-bezier(0.25, 0.8, 0.25, 1) forwards;
+}
+
+@keyframes fadePop {
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-pop {
+  animation: fadePop 0.5s cubic-bezier(0.25, 0.8, 0.25, 1) forwards,
+    pulse 1s ease-in-out 0.5s infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
 }
