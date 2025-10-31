@@ -2,17 +2,10 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RobotNarratorComponent } from '../../component/robot-narrator/robot-narrator';
 import { trigger, style, transition, animate } from '@angular/animations';
-import { DividerModule } from 'primeng/divider';
-import { AccordionModule } from 'primeng/accordion';
 
 @Component({
   selector: 'app-landing',
-  imports: [
-    CommonModule,
-    RobotNarratorComponent,
-    DividerModule,
-    AccordionModule,
-  ],
+  imports: [CommonModule, RobotNarratorComponent],
   templateUrl: './landing.html',
   styleUrl: './landing.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

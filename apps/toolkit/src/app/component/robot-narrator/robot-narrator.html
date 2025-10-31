@@ -1,18 +1,33 @@
 <div class="container">
   @defer (on idle) {
-  <p-select
-    [options]="characters"
-    [(ngModel)]="selectedCharacter"
-    optionLabel="name"
-    placeholder="Select a Voice"
-    class="character-selector"
-    (onChange)="selectCharacter()"
-  />
+  <div class="select-container">
+    <label style="margin-bottom: 1rem" for="character-select"
+      >Character Voice</label
+    >
+    <select
+      [(ngModel)]="selectedCharacter"
+      name="character"
+      id="character-select"
+      (change)="selectCharacter()"
+    >
+      <option class="test" [ngValue]="null" disabled>Choose a Voice</option>
+      <option
+        class="test"
+        [ngValue]="character"
+        *ngFor="let character of characters; trackBy: trackById"
+      >
+        {{ character.name }}
+      </option>
+    </select>
+  </div>
+
   } @placeholder {
   <div>Voices are loading</div>
-  } @defer (on viewport; prefetch on idle) {
-  <div class="svg-wrapper">
+  }
+  <div #svgWrapper class="pic-wrapper">
+    @defer (on timer(1000)) {
     <svg
+      ngSkipHydration
       id="svg5"
       viewBox="0 0 1035.29 880"
       svgWidth="1000"
@@ -231,14 +246,14 @@
         y="328.93573"
       />
     </svg>
+    <link rel="prefetch" href="../../../assets/main-robot.svg" as="link" />
+    } @placeholder { Loading... }
   </div>
-  } @placeholder {
-  <div class="svg-wrapper"></div>
-  } @defer (on interaction) {
+  @defer (on interaction) {
   <audio
     class="audioPlayer"
-    #audioElement
     controls
+    preload="none"
     [src]="selectedCharacter.url"
     (ended)="pauseAudio()"
   ></audio>

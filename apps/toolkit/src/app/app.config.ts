@@ -9,7 +9,6 @@ import { appRoutes } from './app.routes';
 import { provideStoreDevtools } from '@ngrx/store-devtools';
 
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
-import { providePrimeNG } from 'primeng/config';
 import Aura from '@primeng/themes/Aura';
 import {
   provideHttpClient,
@@ -31,13 +30,6 @@ export const appConfig: ApplicationConfig = {
       trace: false,
     }),
     provideAnimationsAsync(),
-    providePrimeNG({
-      theme: {
-        preset: Aura,
-      },
-      ripple: true,
-      inputVariant: 'outlined',
-    }),
     provideHttpClient(withInterceptorsFromDi()),
   ],
 };

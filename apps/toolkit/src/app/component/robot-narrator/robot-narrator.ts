@@ -9,7 +9,6 @@ import {
   ChangeDetectorRef,
   viewChildren,
   Input,
-  output,
   viewChild,
   signal,
 } from '@angular/core';
@@ -29,28 +28,25 @@ import {
   combineLatest,
   shareReplay,
 } from 'rxjs';
-import { SelectModule } from 'primeng/select';
 import { FormsModule } from '@angular/forms';
-import { DividerModule } from 'primeng/divider';
 import { toObservable } from '@angular/core/rxjs-interop';
-import * as Tone from 'tone';
+import { ToneService } from '../../services.ts/tone.service';
+import { v4 as uuidv4 } from 'uuid';
+
+type TonePlayer = import('tone').Player;
 
 type SimpleConfig = {
-  // Originally for GSAP eye sweep only
-  // fps: number;
-  // Bar scaling
   minScale: number;
   maxScale: number;
   gain: number;
-  // Small timing nudge if needed (positive = bars ahead)
   offset?: number;
-  // Silence gate for tiny noise
-  silenceGate?: number; // 0..1
+  silenceGate?: number;
 };
 
 interface Character {
   name: string;
   url: string;
+  id: string;
 }
 
 const DEFAULTS: SimpleConfig = {
@@ -67,7 +63,12 @@ const ENVELOPE_HZ = 120; // dynamic envelope resolution (samples/sec)
 @Component({
   selector: 'app-robot-narrator',
   standalone: true,
-  imports: [CommonModule, SelectModule, FormsModule, DividerModule],
+  imports: [
+    CommonModule,
+    // SelectModule,
+    FormsModule,
+    // DividerModule
+  ],
   templateUrl: './robot-narrator.html',
   styleUrls: ['./robot-narrator.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -82,7 +83,7 @@ export class RobotNarratorComponent
   private env: number[] = []; // normalized 0..1
   private envHz = ENVELOPE_HZ; // envelope frames per second
   private duration = 0; // seconds
-  private expectedEndAt = 0;
+
   private bookTween: gsap.core.Tween | null = null;
   private getViewportWidth = () =>
     Math.max(document.documentElement.clientWidth, window.innerWidth || 0);
@@ -95,7 +96,7 @@ export class RobotNarratorComponent
     viewChild<ElementRef<SVGGraphicsElement>>('desktopActionBtn');
   private tl: gsap.core.Timeline = gsap.timeline({ repeat: -1, paused: true });
   private resizeSub?: Subscription;
-  private player!: Tone.Player;
+  private player: TonePlayer | undefined;
   private startedAt = 0; // Tone.now() at last play
   private offsetSec = 0; // accumulated pause/seek offset
   private hasEngineStarted = false;
@@ -118,41 +119,41 @@ export class RobotNarratorComponent
   );
   private _manualStop = false;
   isPlaying = false;
-  characters: Character[] = [];
-  selectedCharacter: Character = {
-    name: 'Austin',
-    url: '../../../assets/austin-texas.mp3',
-  };
+  characters: Character[] = [
+    { name: 'Austin', url: '../../../assets/austin-texas.mp3', id: uuidv4() },
+    {
+      name: 'Grandpa Spuds',
+      url: '../../../assets/grandpa-spuds-oxley.mp3',
+      id: uuidv4(),
+    },
+  ];
+  selectedCharacter: Character;
 
   get isResponsive(): boolean {
     return this.widthPx() < this.smBreakpoint;
   }
 
-  constructor(private ngZone: NgZone, private cdr: ChangeDetectorRef) {}
+  constructor(
+    private ngZone: NgZone,
+    private cdr: ChangeDetectorRef,
+    private toneService: ToneService
+  ) {}
 
   ngOnInit(): void {
     this._cfg = { ...DEFAULTS, ...this.config };
-    this.characters = [
-      { name: 'Austin', url: '../../../assets/austin-texas.mp3' },
-      {
-        name: 'Grandpa Spuds',
-        url: '../../../assets/grandpa-spuds-oxley.mp3',
-      },
-    ];
-    this.amplitudes$
-      .pipe(
-        take(1),
-        tap(() => console.log('amplitudes$'))
-      )
-      .subscribe();
+    this.selectedCharacter = this.characters[0];
+    this.amplitudes$.pipe(take(1)).subscribe();
   }
-
   ngAfterViewInit(): void {
     this.domReady$.subscribe();
-
     combineLatest([this.amplitudes$, this.domReady$])
       .pipe(take(1))
-      .subscribe(() => this.startEngine());
+      .subscribe(() => {
+        requestIdleCallback(() => this.startEngine());
+        if (!this.hasEngineStarted) {
+          setTimeout(() => this.startEngine(), 0);
+        }
+      });
 
     this.resizeSub = fromEvent(window, 'resize')
       .pipe(
@@ -178,6 +179,10 @@ export class RobotNarratorComponent
     this.tl?.kill();
   }
 
+  trackById(index: number, c: Character) {
+    return c.id;
+  }
+
   restartNarration() {
     if (!this.bookTween) return;
     this.bookTween
@@ -187,8 +192,9 @@ export class RobotNarratorComponent
     this.bookTween?.eventCallback('onReverseComplete', () => {
       // Reset to normal speed for the next play
       this.bookTween?.timeScale(1);
-      this.restartWave(); // ensures bars, eyes, etc. reset cleanly
+      // ensures bars, eyes, etc. reset cleanly
     });
+    this.restartWave();
   }
 
   private startEngine() {
@@ -243,58 +249,53 @@ export class RobotNarratorComponent
     this.setupTonePlayer(this.selectedCharacter.url);
   }
 
-  private setupTonePlayer(url: string): Promise<void> {
-    return new Promise<void>((resolve, reject) => {
-      // Dispose any previous player
-      if (this.player) {
-        try {
-          this.player.dispose();
-        } catch (err) {
-          console.log('player', err);
-        }
-        this.player = undefined as any;
+  private async setupTonePlayer(url: string): Promise<void> {
+    // Dispose previous player
+    if (this.player) {
+      try {
+        this.player.dispose();
+      } catch (err) {
+        console.log('setupTonePlayer err', err);
       }
+      this.player = undefined;
+    }
 
-      // Reset decoded state for the new file
-      this.duration = 0;
-      this.env = [];
+    this.duration = 0;
+    this.env = [];
 
-      const player = new Tone.Player({
-        url,
-        autostart: false,
-        onload: () => {
-          try {
-            const buf = player.buffer?.get() as AudioBuffer | undefined;
-            if (!buf) throw new Error('No AudioBuffer after load');
+    const player = await this.toneService.createPlayer({
+      url,
+      autostart: false,
+      onload: () => {
+        const buf = player.buffer?.get() as AudioBuffer | undefined;
+        if (!buf) throw new Error('No AudioBuffer after load');
 
-            this.duration = buf.duration;
-            this.env = this.buildRmsEnvelope(buf, this.envHz);
+        this.duration = buf.duration;
+        this.env = this.buildRmsEnvelope(buf, this.envHz);
+        this.player = player;
+        this.cdr.markForCheck();
+      },
+      onstop: () => {
+        if (this._switching) return;
 
-            this.player = player; // set only after success
-            this.cdr.markForCheck();
-            resolve();
-          } catch (e) {
-            reject(e);
-          }
-        },
-        onstop: () => {
-          if (this._switching) return;
+        const manual = this._manualStop;
+        this._manualStop = false;
 
-          const manual = this._manualStop;
-          this._manualStop = false;
-
-          if (!manual) {
-            // natural end
-            this.offsetSec = this.duration;
-            this.bookTween?.timeScale(4).reverse();
-            this.bookTween?.eventCallback('onReverseComplete', () => {
-              this.bookTween!.timeScale(1);
-              this.restartWave(); // this resets offsetSec to 0 on purpose
-            });
-          }
-        },
-      }).toDestination();
+        if (!manual) {
+          this.offsetSec = this.duration;
+          this.bookTween?.timeScale(4).reverse();
+          this.bookTween?.eventCallback('onReverseComplete', () => {
+            this.bookTween?.timeScale(1);
+            this.restartWave();
+          });
+        }
+      },
     });
+
+    // await the player load if you need to ensure buffer readiness
+    // await new Promise<void>((resolve) => {
+    //   player.onload = () => resolve();
+    // });
   }
 
   private buildRmsEnvelope(buffer: AudioBuffer, envHz: number): number[] {
@@ -334,13 +335,16 @@ export class RobotNarratorComponent
     return env;
   }
 
-  private renderFrame = () => {
+  private renderFrame = async () => {
     const t =
-      Tone.now() - this.startedAt + this.offsetSec + (this._cfg.offset ?? 0);
+      (await this.toneService.now()) -
+      this.startedAt +
+      this.offsetSec +
+      (this._cfg.offset ?? 0);
 
     if (this.duration && t >= this.duration) {
       this.applyBarsAtTime(this.duration);
-      this.pauseAudio(); // stop audio + rAF; eyes paused by pauseAudio
+      this.pauseAudio();
       return;
     }
 
@@ -382,39 +386,31 @@ export class RobotNarratorComponent
 
   async playAudio() {
     if (!this.hasEngineStarted) {
-      console.log('starting engine');
       combineLatest([this.amplitudes$, this.domReady$])
         .pipe(
           take(1),
-          tap(() => {
-            console.log('starting engine');
-            this.hasEngineStarted = true;
-          })
+          tap(() => (this.hasEngineStarted = true))
         )
         .subscribe(() => this.startEngine());
     }
-    await Tone.start();
+
+    // 🔑 Ensure Tone is loaded & AudioContext resumed
+    await this.toneService.start();
+
     if (this.isPlaying) return;
-    console.log('is not playing');
-    console.log(
-      'this.player | ',
-      this.player,
-      'this.duration | ',
-      this.duration,
-      'this.env.length | ',
-      this.env.length
-    );
-    if (!this.player || !this.duration || !this.env.length) return; // not ready yet
-    console.log('audio check');
-    console.log('');
+
+    // If player not ready yet, create it now
+    if (!this.player || !this.duration || !this.env.length) {
+      await this.setupTonePlayer(this.selectedCharacter.url);
+      if (!this.player || !this.duration || !this.env.length) return;
+    }
+
     this.tl?.play();
-    this.bookTween?.play(); // NEW
+    this.bookTween?.play();
 
-    this.startedAt = Tone.now();
+    this.startedAt = await this.toneService.now();
+
     this.player.start(this.startedAt, this.offsetSec);
-
-    const remaining = Math.max(0, this.duration - this.offsetSec);
-    this.expectedEndAt = this.startedAt + remaining;
 
     if (!this._rafId) this._rafId = requestAnimationFrame(this.renderFrame);
 
@@ -422,18 +418,17 @@ export class RobotNarratorComponent
     this.cdr.markForCheck();
   }
 
-  pauseAudio(force = false) {
+  async pauseAudio(force = false) {
     if (!force && !this.isPlaying) return;
 
-    // capture BEFORE stop
-    const now = Tone.now();
+    const now = await this.toneService.now();
     this.offsetSec = Math.min(
       this.duration,
       now - this.startedAt + this.offsetSec
     );
 
     this._manualStop = true;
-    this.player?.stop(); // after this, you can’t query position
+    this.player?.stop();
     cancelAnimationFrame(this._rafId!);
     this._rafId = null;
     this.tl?.pause();
@@ -455,7 +450,6 @@ export class RobotNarratorComponent
 
     // Reset clocks
     this.offsetSec = 0;
-    this.expectedEndAt = 0;
     this.startedAt = 0;
 
     if (this._barSetters.length) this.applyBarsAtTime(0);
@@ -507,7 +501,4 @@ export class RobotNarratorComponent
       this.playAudio();
     }
   }
-}
-function ref(arg0: number) {
-  throw new Error('Function not implemented.');
 }
