@@ -1,8 +1,8 @@
 export default {
-  displayName: 'toolkit',
+  displayName: 'robot-narrator',
   preset: '../../jest.preset.js',
   setupFilesAfterEnv: ['<rootDir>/src/test-setup.ts'],
-  coverageDirectory: '../../coverage/apps/toolkit',
+  coverageDirectory: '../../coverage/apps/robot-narrator',
   transform: {
     '^.+\\.(ts|mjs|js|html)$': [
       'jest-preset-angular',

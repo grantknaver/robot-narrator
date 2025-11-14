@@ -16,7 +16,7 @@
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
     "paths": {
-      "@storytaim/styles": ["libs/styles/src/index.ts"]
+      "@robot-narrator/styles": ["libs/styles/src/index.ts"]
     }
   },
   "exclude": ["node_modules", "tmp"]

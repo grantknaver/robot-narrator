@@ -1,11 +1,11 @@
 {
-  "name": "@storytaim/source",
+  "name": "@robot-narrator/source",
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {
-    "toolkit-build": "nx run toolkit:build:production",
-    "toolkit-serve": "nx run toolkit:serve:development",
-    "toolkit-lint": "nx run toolkit:lint"
+    "robot-narrator-build": "nx run robot-narrator:build:production",
+    "robot-narrator-serve": "nx run robot-narrator:serve:development",
+    "robot-narrator-lint": "nx run robot-narrator:lint"
   },
   "private": true,
   "dependencies": {
