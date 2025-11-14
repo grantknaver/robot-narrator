@@ -32,22 +32,10 @@ import { FormsModule } from '@angular/forms';
 import { toObservable } from '@angular/core/rxjs-interop';
 import { ToneService } from '../../services.ts/tone.service';
 import { v4 as uuidv4 } from 'uuid';
+import { SimpleConfig } from '../../types/simplyConfig';
+import { Character } from '../../types/character';
 
 type TonePlayer = import('tone').Player;
-
-type SimpleConfig = {
-  minScale: number;
-  maxScale: number;
-  gain: number;
-  offset?: number;
-  silenceGate?: number;
-};
-
-interface Character {
-  name: string;
-  url: string;
-  id: string;
-}
 
 const DEFAULTS: SimpleConfig = {
   // fps: 18,
@@ -73,6 +61,7 @@ export class RobotNarratorComponent
   private _barSetters: Array<(v: number) => void> = [];
   private _rafId: number | null = null;
   private env: number[] = []; // normalized 0..1
+  private currentUrl: string | null = null;
   private duration = 0; // seconds
   private bookTween: gsap.core.Tween | null = null;
   private getViewportWidth = () =>
@@ -104,8 +93,7 @@ export class RobotNarratorComponent
     distinctUntilChanged(),
     filter(Boolean),
     take(1),
-    shareReplay(1),
-    tap(() => console.log('domReady$ check...'))
+    shareReplay(1)
   );
   private _manualStop = false;
   isPlaying = false;
@@ -175,16 +163,19 @@ export class RobotNarratorComponent
 
   restartNarration() {
     if (!this.bookTween) return;
-    this.bookTween
-      ?.timeScale(4) // 4× faster reverse (adjust to taste)
-      .reverse();
 
-    this.bookTween?.eventCallback('onReverseComplete', () => {
-      // Reset to normal speed for the next play
-      this.bookTween?.timeScale(1);
-      // ensures bars, eyes, etc. reset cleanly
+    // Adjust this number to taste:
+    // 1 = normal speed, 2 = 2× faster, 0.5 = slower, etc.
+    this.bookTween.timeScale(1).reverse();
+
+    this.bookTween.eventCallback('onReverseComplete', () => {
+      // Put the tween back to normal speed for next time
+      this.bookTween!.timeScale(1);
+
+      // Now that the close animation actually finished,
+      // do your full reset (eyes, bars, state, etc.)
+      this.restartWave();
     });
-    this.restartWave();
   }
 
   private startEngine() {
@@ -237,7 +228,6 @@ export class RobotNarratorComponent
   }
 
   private async setupTonePlayer(url: string): Promise<void> {
-    // Dispose previous player
     if (this.player) {
       try {
         this.player.dispose();
@@ -247,46 +237,33 @@ export class RobotNarratorComponent
       this.player = undefined;
     }
 
-    // Reset derived state
     this.duration = 0;
     this.env = [];
 
-    // Create the player (no onload/onstop here)
     const player = await this.toneService.createPlayer({
       url,
       autostart: false,
     });
 
-    // ✅ Wait until the audio is fully loaded/decoded
     const pAny = player as any;
     if (pAny.loaded && typeof pAny.loaded.then === 'function') {
-      await pAny.loaded; // Tone v14+
+      await pAny.loaded;
     } else {
-      await player.load(url); // fallback if typings differ
+      await player.load(url);
     }
 
-    // Buffer is now ready
     const buf = player.buffer?.get() as AudioBuffer | undefined;
     if (!buf) throw new Error('No AudioBuffer after load');
 
     this.duration = buf.duration;
     this.env = this.buildRmsEnvelope(buf, this.envHz);
     this.player = player;
+    this.currentUrl = url; // ✅ remember which file this.player is for
     this.cdr.markForCheck();
 
-    // Reattach your onstop handler AFTER player exists
     this.player.onstop = () => {
-      const manual = this._manualStop;
+      // Just clear the manual flag; renderFrame handles the reset.
       this._manualStop = false;
-
-      if (!manual) {
-        this.offsetSec = this.duration;
-        this.bookTween?.timeScale(4).reverse();
-        this.bookTween?.eventCallback('onReverseComplete', () => {
-          this.bookTween?.timeScale(1);
-          this.restartWave();
-        });
-      }
     };
   }
 
@@ -335,8 +312,12 @@ export class RobotNarratorComponent
       (this._cfg.offset ?? 0);
 
     if (this.duration && t >= this.duration) {
+      // Draw the final frame so bars end in a sane state
       this.applyBarsAtTime(this.duration);
-      this.pauseAudio();
+
+      // ✅ Hard reset everything: eyes, book, state, etc.
+      this.restartWave();
+
       return;
     }
 
@@ -386,14 +367,24 @@ export class RobotNarratorComponent
         .subscribe(() => this.startEngine());
     }
 
-    // 🔑 Ensure Tone is loaded & AudioContext resumed
     await this.toneService.start();
 
     if (this.isPlaying) return;
 
-    // If player not ready yet, create it now
-    if (!this.player || !this.duration || !this.env.length) {
-      await this.setupTonePlayer(this.selectedCharacter.url); // fetch+decode happens here
+    const targetUrl = this.selectedCharacter?.url;
+
+    // 🔑 Rebuild player if:
+    // - we don't have one yet
+    // - or the env/duration aren't ready
+    // - or the selected character changed
+    if (
+      !this.player ||
+      !this.duration ||
+      !this.env.length ||
+      this.currentUrl !== targetUrl
+    ) {
+      this.restartWave(); // reset bars/eyes/book state
+      await this.setupTonePlayer(targetUrl!);
       if (!this.player || !this.duration || !this.env.length) return;
     }
 
@@ -404,7 +395,9 @@ export class RobotNarratorComponent
 
     this.player.start(this.startedAt, this.offsetSec);
 
-    if (!this._rafId) this._rafId = requestAnimationFrame(this.renderFrame);
+    if (!this._rafId) {
+      this._rafId = requestAnimationFrame(this.renderFrame);
+    }
 
     this.isPlaying = true;
     this.cdr.markForCheck();
@@ -456,10 +449,17 @@ export class RobotNarratorComponent
     this.cdr.markForCheck();
   }
 
-  // ---------- helpers ----------
-  private clamp01(x: number) {
-    return x < 0 ? 0 : x > 1 ? 1 : x;
-  }
+  onCharacterChange = (char: Character | null) => {
+    if (!char) return;
+    this.selectedCharacter = char;
+
+    // Reset visual + timing state whenever voice changes
+    this.restartWave();
+
+    // Optional: pre-load the new voice so first Play is snappy
+    // (you can leave this out and let playAudio() call setupTonePlayer)
+    this.setupTonePlayer(char.url);
+  };
 
   desktopAction() {
     gsap.set(this.desktopActionBtnEl, {
@@ -471,5 +471,10 @@ export class RobotNarratorComponent
     } else {
       this.playAudio();
     }
+  }
+
+  // ---------- helpers ----------
+  private clamp01(x: number) {
+    return x < 0 ? 0 : x > 1 ? 1 : x;
   }
 }

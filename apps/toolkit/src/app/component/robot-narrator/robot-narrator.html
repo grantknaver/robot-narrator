@@ -8,7 +8,7 @@
       [(ngModel)]="selectedCharacter"
       name="character"
       id="character-select"
-      (change)="restartNarration()"
+      (ngModelChange)="onCharacterChange($event)"
     >
       <option [ngValue]="null" disabled>Choose a Voice</option>
       <option
