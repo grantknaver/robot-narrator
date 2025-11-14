@@ -9,7 +9,6 @@ import { appRoutes } from './app.routes';
 import { provideStoreDevtools } from '@ngrx/store-devtools';
 
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
-import Aura from '@primeng/themes/aura';
 import {
   provideHttpClient,
   withInterceptorsFromDi,

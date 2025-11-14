@@ -161,21 +161,11 @@ export class RobotNarratorComponent
     return c.id;
   }
 
-  restartNarration() {
-    if (!this.bookTween) return;
+  async restartNarration() {
+    this.restartWave();
 
-    // Adjust this number to taste:
-    // 1 = normal speed, 2 = 2× faster, 0.5 = slower, etc.
-    this.bookTween.timeScale(1).reverse();
-
-    this.bookTween.eventCallback('onReverseComplete', () => {
-      // Put the tween back to normal speed for next time
-      this.bookTween!.timeScale(1);
-
-      // Now that the close animation actually finished,
-      // do your full reset (eyes, bars, state, etc.)
-      this.restartWave();
-    });
+    // If you want Restart = "go back to start and play":
+    // await this.playAudio();
   }
 
   private startEngine() {
@@ -414,36 +404,47 @@ export class RobotNarratorComponent
 
     this._manualStop = true;
     this.player?.stop();
-    cancelAnimationFrame(this._rafId!);
-    this._rafId = null;
+    if (this._rafId) {
+      cancelAnimationFrame(this._rafId);
+      this._rafId = null;
+    }
     this.tl?.pause();
-    this.bookTween?.reverse();
+    this.bookTween?.reverse(); // just for the animation
     this.isPlaying = false;
     this.cdr.markForCheck();
   }
 
   restartWave() {
-    // Treat this as a manual stop so onstop doesn't run the natural-end path.
     this._manualStop = true;
 
     if (this._rafId) {
       cancelAnimationFrame(this._rafId);
       this._rafId = null;
     }
-    this.player?.stop(); // safe: _manualStop prevents natural branch
+
+    this.player?.stop();
     this.isPlaying = false;
 
     // Reset clocks
     this.offsetSec = 0;
     this.startedAt = 0;
 
-    if (this._barSetters.length) this.applyBarsAtTime(0);
+    if (this._barSetters.length) {
+      this.applyBarsAtTime(0);
+    }
+
+    // Reset eyes timeline
     this.tl?.pause(0);
 
+    // 🔑 Reset the book tween directly instead of waiting for reverse to finish
     if (this.bookTween) {
-      // Clear any stacked handlers and hard-reset the tween
-      this.bookTween.eventCallback('onReverseComplete', null);
-      this.bookTween.timeScale(1).pause(0);
+      this.bookTween.timeScale(1).reverse();
+      this.bookTween.eventCallback('onReverseComplete', () => {
+        // Put the tween back to normal speed for next time
+        this.bookTween?.timeScale(1).pause(0).progress(0); // snap to "closed" (start)
+        // Now that the close animation actually finished,
+        // do your full reset (eyes, bars, state, etc.)
+      }); // clear any old handlers
     }
 
     this.cdr.markForCheck();
