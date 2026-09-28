@@ -1,0 +1,14 @@
+# Cloudflare static-asset headers (applied by Workers assets / Pages)
+
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=()
+
+# Vite fingerprints everything in /assets — cache forever
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# Narration audio isn't hashed; cache for a day, revalidate after
+/audio/*
+  Cache-Control: public, max-age=86400, stale-while-revalidate=604800

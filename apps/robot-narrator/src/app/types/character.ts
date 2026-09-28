@@ -1,5 +1,0 @@
-export interface Character {
-  name: string;
-  url: string;
-  id: string;
-}

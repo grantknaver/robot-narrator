@@ -1,81 +1,71 @@
-# Robot Narrator
+# Readbot
 
-<a alt="Nx logo" href="https://nx.dev" target="_blank" rel="noreferrer"><img src="https://raw.githubusercontent.com/nrwl/nx/master/images/nx-logo.png" width="45"></a>
+A little robot that reads to you. Pick a voice, hit play, and its light‑bar
+mouth moves with the narration while it scans the page and lifts its book.
 
-✨ Your new, shiny [Nx workspace](https://nx.dev) is almost ready ✨.
+- **Vite + TypeScript**, no framework — ~30 KB gzipped JS (almost all GSAP)
+- **Web Audio** for playback; a pre‑computed RMS loudness envelope drives the
+  mouth from the audio clock (latency‑compensated), so it stays locked to the voice
+- **GSAP** for eyes / book / mouth motion; honours `prefers-reduced-motion`
+- Light + dark themes, keyboard shortcuts (<kbd>Space</kbd>, <kbd>R</kbd>),
+  seekable timeline, lock‑screen media controls
+- Deploys to **Cloudflare Workers** as static assets (no Worker code)
 
-[Learn more about this workspace setup and its capabilities](https://nx.dev/getting-started/tutorials/angular-monorepo-tutorial?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) or run `npx nx graph` to visually explore what was created. Now, let's get you up to speed!
-
-## Finish your CI setup
-
-[Click here to finish setting up your workspace!](https://cloud.nx.app/connect/5jMu9zANcj)
-
-## Run tasks
-
-To run the dev server for your app, use:
-
-```sh
-npx nx serve robot-narrator
-```
-
-To create a production bundle:
+## Develop
 
 ```sh
-npx nx build robot-narrator
+npm install
+npm run dev        # http://localhost:5173
 ```
 
-To see all available targets to run for a project, run:
+## Deploy to Cloudflare
 
 ```sh
-npx nx show project robot-narrator
+npx wrangler login # once
+npm run deploy     # builds, then `wrangler deploy`
 ```
 
-These targets are either [inferred automatically](https://nx.dev/concepts/inferred-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) or defined in the `project.json` or `package.json` files.
+That publishes to `https://readbot.<your-subdomain>.workers.dev`.
+Add a custom domain under **Workers & Pages → readbot → Settings → Domains & Routes**.
 
-[More about running tasks in the docs &raquo;](https://nx.dev/features/run-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+`npm run preview` builds and serves the site locally through the real
+Workers runtime (`wrangler dev`), including the `_headers` caching rules.
 
-## Add new projects
+### Auto‑deploy
 
-While you could add new projects to your workspace manually, you might want to leverage [Nx plugins](https://nx.dev/concepts/nx-plugins?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) and their [code generation](https://nx.dev/features/generate-code?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) feature.
+Either option works — pick one:
 
-Use the plugin's generator to create new projects.
+1. **Cloudflare Git integration (easiest).** Workers & Pages → Create → Import a
+   repository. Build command `npm run build`, deploy command `npx wrangler deploy`.
+2. **GitHub Actions.** `.github/workflows/ci.yml` builds every push/PR and deploys
+   pushes to `master`/`main` once you add the `CLOUDFLARE_API_TOKEN`
+   (template: _Edit Cloudflare Workers_) and `CLOUDFLARE_ACCOUNT_ID` repo secrets.
 
-To generate a new application, use:
+## Project layout
 
-```sh
-npx nx g @nx/angular:app demo
+```
+index.html          page shell + inline robot SVG (paints before any JS)
+src/main.ts         UI wiring, state, render loop
+src/audio.ts        Web Audio engine + loudness envelope
+src/robot.ts        all robot motion (mouth, eyes, blink, book)
+src/style.css       theme tokens + layout
+public/audio/       narration mp3s
+public/_headers     cache + security headers for Cloudflare
+wrangler.jsonc      Cloudflare Workers config
 ```
 
-To generate a new library, use:
+## Adding a voice
 
-```sh
-npx nx g @nx/angular:lib mylib
+Drop an mp3 in `public/audio/` and add another radio in `index.html`:
+
+```html
+<label class="voice">
+  <input type="radio" name="voice" value="/audio/my-voice.mp3" data-name="My Voice" />
+  <span>My Voice</span>
+</label>
 ```
 
-You can use `npx nx list` to get a list of installed plugins. Then, run `npx nx list <plugin-name>` to learn about more specific capabilities of a particular plugin. Alternatively, [install Nx Console](https://nx.dev/getting-started/editor-setup?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) to browse plugins and generators in your IDE.
+## Tuning the mouth
 
-[Learn more about Nx plugins &raquo;](https://nx.dev/concepts/nx-plugins?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) | [Browse the plugin registry &raquo;](https://nx.dev/plugin-registry?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-
-[Learn more about Nx on CI](https://nx.dev/ci/intro/ci-with-nx#ready-get-started-with-your-provider?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-
-## Install Nx Console
-
-Nx Console is an editor extension that enriches your developer experience. It lets you run tasks, generate code, and improves code autocompletion in your IDE. It is available for VSCode and IntelliJ.
-
-[Install Nx Console &raquo;](https://nx.dev/getting-started/editor-setup?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-
-## Useful links
-
-Learn more:
-
-- [Learn more about this workspace setup](https://nx.dev/getting-started/tutorials/angular-monorepo-tutorial?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Learn about Nx on CI](https://nx.dev/ci/intro/ci-with-nx?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Releasing Packages with Nx release](https://nx.dev/features/manage-releases?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [What are Nx plugins?](https://nx.dev/concepts/nx-plugins?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-
-And join the Nx community:
-
-- [Discord](https://go.nx.dev/community)
-- [Follow us on X](https://twitter.com/nxdevtools) or [LinkedIn](https://www.linkedin.com/company/nrwl)
-- [Our Youtube channel](https://www.youtube.com/@nxdevtools)
-- [Our blog](https://nx.dev/blog?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+`DEFAULT_MOUTH` in `src/robot.ts` — `gain`, `minScale`/`maxScale`,
+`silenceGate`, `barSpread` (ripple across bars) and `attack`/`release` smoothing.
